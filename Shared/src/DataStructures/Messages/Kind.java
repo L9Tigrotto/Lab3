@@ -1,4 +1,4 @@
-package Shared.DataStructures.Messages;
+package DataStructures.Messages;
 
 public enum Kind
 {
