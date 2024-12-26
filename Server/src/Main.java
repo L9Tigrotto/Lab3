@@ -9,7 +9,10 @@ public class Main
     public static void main(String[] args) throws InterruptedException
     {
         Properties properties = Utilities.LoadProperties(CONFIG_FILENAME);
+        System.out.println("Server");
+        return;
 
+        /*
         int port = Integer.parseInt(properties.getProperty("port"));
         Listener listener = new Listener(port);
         listener.Start();
@@ -17,6 +20,7 @@ public class Main
         Scanner scanner = new Scanner(System.in);
         while (!scanner.nextLine().equalsIgnoreCase("exit")) {  }
         listener.Stop();
+        */
     }
 
 

@@ -1,5 +1,7 @@
-import Shared.DataStructures.Messages.Kind;
-import Shared.DataStructures.Messages.Message;
+package DataStructures;
+
+import DataStructures.Messages.Kind;
+import DataStructures.Messages.Message;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

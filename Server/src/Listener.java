@@ -72,7 +72,7 @@ public class Listener
                 try
                 {
                     Socket socket = serverSocket.accept();
-                    //Connection connection = new Connection(socket);
+                    //DataStructures.Connection connection = new DataStructures.Connection(socket);
                     //ServerGame serverGame = new ServerGame(connection);
                     //threadPool.execute(serverGame);
                 }

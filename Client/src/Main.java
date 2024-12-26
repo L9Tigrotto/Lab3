@@ -1,4 +1,6 @@
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.Properties;
 
 public class Main
@@ -9,6 +11,17 @@ public class Main
     {
         Properties properties = Utilities.LoadProperties(CONFIG_FILENAME);
 
-        System.out.println(properties.getProperty("ServerIP"));
+        /*
+        String ServerIP = properties.getProperty("ServerIP");
+        int ServerPort = Integer.parseInt(properties.getProperty("ServerPort"));
+        try (Socket socket = new Socket(ServerIP, ServerPort))
+        {
+
+        }
+        catch (IOException e)
+        {
+
+        }
+        */
     }
 }
