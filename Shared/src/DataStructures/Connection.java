@@ -34,4 +34,21 @@ public class Connection
         _dataOutputStream.writeInt(message.GetKind().GetCode());
         _dataOutputStream.writeUTF(message.GetData());
     }
+
+    public void Send(int number) throws IOException
+    {
+        _dataOutputStream.writeInt(number);
+    }
+
+    public int ReceiveInt() throws IOException
+    {
+        return _dataInputStream.readInt();
+    }
+
+    public void Close() throws IOException
+    {
+        _socket.close();
+    }
+
+
 }
