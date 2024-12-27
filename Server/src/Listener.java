@@ -1,6 +1,10 @@
+
+import DataStructures.Connection;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -22,7 +26,7 @@ public class Listener
 
     public synchronized void Start()
     {
-        if (!_isRunning)
+        if (_isRunning)
         {
             System.out.println("[Warning] Server is already running");
             return;
@@ -55,13 +59,8 @@ public class Listener
         System.out.println("[INFO] Type 'exit' to close the server");
 
         int numberOfThreads = Runtime.getRuntime().availableProcessors();
-        ExecutorService threadPool = new ThreadPoolExecutor(
-                0, numberOfThreads,
-                10, TimeUnit.MINUTES,
-                new LinkedBlockingQueue<Runnable>());
-
-        // use tcp sockets to ensure not to lose messages.
-        try (ServerSocket serverSocket = new ServerSocket(_port))
+        try (ExecutorService threadPool = new ThreadPoolExecutor(0, numberOfThreads, 10, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>());
+             ServerSocket serverSocket = new ServerSocket(_port))
         {
             // set the serverSocket.accept() call blocking for 10 seconds before throwing a timeout exception
             // and check if _isStopRequested has set to true.
@@ -72,18 +71,19 @@ public class Listener
                 try
                 {
                     Socket socket = serverSocket.accept();
-                    //DataStructures.Connection connection = new DataStructures.Connection(socket);
-                    //ServerGame serverGame = new ServerGame(connection);
-                    //threadPool.execute(serverGame);
+                    Connection connection = new Connection(socket);
+                    ClientHandler client = new ClientHandler(connection);
+                    threadPool.submit(client);
                 }
                 catch (SocketTimeoutException e) { continue; }
             }
-        }
-        catch (IOException e) { throw new RuntimeException(e); }
 
-        threadPool.shutdown();
-        try { boolean closed = threadPool.awaitTermination(1, TimeUnit.MINUTES); }
-        catch (InterruptedException e) { throw new RuntimeException(e); }
+            threadPool.shutdown();
+            try { boolean closed = threadPool.awaitTermination(1, TimeUnit.MINUTES); }
+            catch (InterruptedException e) { throw new RuntimeException(e); }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         System.out.println("[INFO] Stopped listening on port " + _port);
     }
