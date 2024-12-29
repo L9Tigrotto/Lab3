@@ -9,7 +9,8 @@ public class Main
 {
     private static final String CONFIG_FILENAME = "client.properties";
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException
+    {
         Properties properties = Utilities.LoadProperties(CONFIG_FILENAME);
 
         String ServerIP = properties.getProperty("ServerIP");
