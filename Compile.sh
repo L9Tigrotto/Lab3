@@ -3,7 +3,10 @@
 sharedCompilePaths="
 ./Shared/src/*.java
 ./Shared/src/DataStructures/*.java
-./Shared/src/DataStructures/Messages/*.java"
+./Shared/src/Messages/*.java
+./Shared/src/Messages/Requests/*.java
+./Shared/src/Messages/Responses/*.java
+./Shared/src/Network/*.java"
 
 clientCompilePaths="
 ./Client/src/*.java"
@@ -17,7 +20,11 @@ javac -d Build/Server $serverCompilePaths $sharedCompilePaths
 linkPaths="
 ./*.class
 ./DataStructures/*.class
-./DataStructures/Messages/*.class"
+./DataStructures/*.class
+./Messages/*.class
+./Messages/Requests/*.class
+./Messages/Responses/*.class
+./Network/*.class"
 
 cd ./Build/Client
 jar cfe ../Client.jar Main $linkPaths

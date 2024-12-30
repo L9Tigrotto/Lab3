@@ -1,7 +1,10 @@
 set sharedCompilePaths=^
     .\Shared\src\*.java^
     .\Shared\src\DataStructures\*.java^
-    .\Shared\src\DataStructures\Messages\*.java
+    .\Shared\src\Messages\*.java^
+    .\Shared\src\Messages\Requests\*.java^
+    .\Shared\src\Messages\Responses\*.java^
+    .\Shared\src\Network\*.java
 
 set clientCompilePaths=^
     .\Client\src\*.java
@@ -9,14 +12,17 @@ set clientCompilePaths=^
 set serverCompilePaths=^
     .\Server\src\*.java
 
-javac -d Build\Client %clientCompilePaths% %sharedCompilePaths%
-javac -d Build\Server %serverCompilePaths% %sharedCompilePaths%
+javac -d .\Build\Client %clientCompilePaths% %sharedCompilePaths%
+javac -d .\Build\Server %serverCompilePaths% %sharedCompilePaths%
 
 
 set linkPaths=^
     .\*.class^
 	.\DataStructures\*.class^
-	.\DataStructures\Messages\*.class
+	.\Messages\*.class^
+	.\Messages\Requests\*.class^
+	.\Messages\Responses\*.class^
+	.\Network\*.class
 
 cd .\Build\Client
 jar cfe ..\Client.jar Main %linkPaths%

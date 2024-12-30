@@ -1,7 +1,7 @@
-package DataStructures;
+package Network;
 
-import DataStructures.Messages.Kind;
-import DataStructures.Messages.Message;
+import Messages.Message;
+import Messages.MessageKind;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -23,7 +23,7 @@ public class Connection
 
     public Message Receive() throws IOException
     {
-        Kind kind = Kind.FromInt(_dataInputStream.readInt());
+        MessageKind kind = MessageKind.FromInt(_dataInputStream.readInt());
         String data = _dataInputStream.readUTF();
 
         return new Message(kind, data);
