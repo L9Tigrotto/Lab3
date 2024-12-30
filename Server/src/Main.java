@@ -1,21 +1,18 @@
 
-import java.util.Properties;
 import java.util.Scanner;
 
 public class                                                                                                                     Main
 {
     private static final String CONFIG_FILENAME = "server.properties";
+    public static final Settings SETTINGS = new Settings(CONFIG_FILENAME);
 
     public static void main(String[] args) throws InterruptedException
     {
-        Properties properties = Utilities.LoadProperties(CONFIG_FILENAME);
-
-        int port = Integer.parseInt(properties.getProperty("TCPListenerPort"));
-        Listener listener = new Listener(port);
+        Listener listener = new Listener();
         listener.Start();
 
         Scanner scanner = new Scanner(System.in);
-        while (!scanner.nextLine().equalsIgnoreCase("exit")) {  }
+        while (!scanner.nextLine().equalsIgnoreCase("stop")) {  }
         listener.Stop();
     }
 

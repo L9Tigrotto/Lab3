@@ -1,25 +1,21 @@
-
-import DataStructures.Connection;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class Listener
 {
-    private boolean _isRunning = false;
-    private final int _port;
+    private boolean _isRunning;
+    private volatile boolean _isStopRequested; // made volatile to avoid thread to cache this value (always updated)
 
-    private boolean _isStopRequested = false;
     private final Thread _thread = new Thread(this::Listen);
 
-    public Listener(int port) { _port = port; }
+    public Listener()
+    {
+        _isRunning = false;
+        _isStopRequested = false;
+    }
 
     public boolean IsRunning() { return _isRunning; }
     public boolean IsStopRequested() { return _isStopRequested; }
@@ -55,12 +51,11 @@ public class Listener
 
     private void Listen()
     {
-        System.out.println("[INFO] Listening on port " + _port);
-        System.out.println("[INFO] Type 'exit' to close the server");
+        System.out.printf("[INFO] Listening on port %d. Type 'stop' to close the server\n", Main.SETTINGS.TCPPort);
 
-        int numberOfThreads = Runtime.getRuntime().availableProcessors();
-        try (ExecutorService threadPool = new ThreadPoolExecutor(0, numberOfThreads, 10, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>());
-             ServerSocket serverSocket = new ServerSocket(_port))
+        BlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<Runnable>(Main.SETTINGS.MaxHandledClients);
+        try (ExecutorService threadPool = new ThreadPoolExecutor(0, Main.SETTINGS.MaxHandledClients, 1, TimeUnit.SECONDS, taskQueue);
+             ServerSocket serverSocket = new ServerSocket(Main.SETTINGS.TCPPort))
         {
             // set the serverSocket.accept() call blocking for 10 seconds before throwing a timeout exception
             // and check if _isStopRequested has set to true.
@@ -71,8 +66,7 @@ public class Listener
                 try
                 {
                     Socket socket = serverSocket.accept();
-                    Connection connection = new Connection(socket);
-                    ClientHandler client = new ClientHandler(connection);
+                    ClientHandler client = new ClientHandler(socket);
                     threadPool.submit(client);
                 }
                 catch (SocketTimeoutException e) { continue; }
@@ -85,6 +79,6 @@ public class Listener
             throw new RuntimeException(e);
         }
 
-        System.out.println("[INFO] Stopped listening on port " + _port);
+        System.out.printf("[INFO] Stopped listening on port %d.\n", Main.SETTINGS.TCPPort);
     }
 }

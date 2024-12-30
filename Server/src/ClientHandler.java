@@ -2,13 +2,15 @@
 import DataStructures.Connection;
 
 import java.io.IOException;
+import java.net.Socket;
 
 public class ClientHandler implements Runnable
 {
     private final Connection _connection;
 
-    public ClientHandler(Connection connection) {
-        _connection = connection;
+    public ClientHandler(Socket clientSocket) throws IOException
+    {
+        _connection = new Connection(clientSocket);
     }
 
     @Override
