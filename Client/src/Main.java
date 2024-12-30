@@ -1,5 +1,5 @@
 
-import DataStructures.Connection;
+import Network.Connection;
 
 import java.io.IOException;
 import java.net.Socket;
