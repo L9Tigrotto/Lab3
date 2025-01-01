@@ -31,7 +31,7 @@ public class Connection
 
     public void Send(Message message) throws IOException
     {
-        _dataOutputStream.writeInt(message.GetKind().GetCode());
+        _dataOutputStream.writeInt(message.GetKind().ToInt());
         _dataOutputStream.writeUTF(message.GetData());
     }
 
