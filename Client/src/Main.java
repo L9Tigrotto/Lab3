@@ -8,18 +8,22 @@ import java.util.Properties;
 public class Main
 {
     private static final String CONFIG_FILENAME = "client.properties";
+    public static final ClientSettings SETTINGS;
+
+    static
+    {
+        try { SETTINGS = new ClientSettings(CONFIG_FILENAME); }
+        catch (IOException e) { throw new RuntimeException(e); }
+    }
 
     public static void main(String[] args) throws IOException
     {
-        Properties properties = Utilities.LoadProperties(CONFIG_FILENAME);
-
-        String ServerIP = properties.getProperty("ServerIP");
-        int ServerPort = Integer.parseInt(properties.getProperty("ServerPort"));
-        int tries = 3;
-        int timeout = 15 * 1000;
-
         Socket socket;
-        try { socket = Utilities.TryConnect(ServerIP, ServerPort, tries, timeout); }
+        try { socket = Utilities.TryConnect(
+                SETTINGS.TCP_IP,
+                SETTINGS.TCP_PORT,
+                SETTINGS.ConnectionRetries,
+                SETTINGS.ConnectionRetryTimeoutMS); }
         catch (Exception e) { return; }
 
         Connection connection = new Connection(socket);

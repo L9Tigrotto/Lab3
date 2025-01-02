@@ -1,17 +1,21 @@
 
+import DataStructures.Settings;
+
+import java.io.IOException;
 import java.util.Properties;
 
-public class Settings
+public class ServerSettings extends Settings
 {
     public int TCPPort;
     public int MaxHandledClients;
     public int TimeoutMS;
 
-    public Settings(String filename)
-    {
-        Properties properties = Utilities.LoadProperties(filename);
+    public ServerSettings(String filename) throws IOException { super(filename); }
 
-        TCPPort = Integer.parseInt(properties.getProperty("TCPPort"));
+    @Override
+    public void Load(Properties properties)
+    {
+        super.Load(properties);
         MaxHandledClients = Integer.parseInt(properties.getProperty("MaxHandledClients"));
         TimeoutMS = Integer.parseInt(properties.getProperty("TimeoutMS"));
     }

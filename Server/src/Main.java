@@ -1,12 +1,19 @@
 
+import java.io.IOException;
 import java.util.Scanner;
 
 public class                                                                                                                     Main
 {
     private static final String CONFIG_FILENAME = "server.properties";
-    public static final Settings SETTINGS = new Settings(CONFIG_FILENAME);
+    public static final ServerSettings SETTINGS;
 
-    public static void main(String[] args) throws InterruptedException
+    static
+    {
+        try { SETTINGS = new ServerSettings(CONFIG_FILENAME); }
+        catch (IOException e) { throw new RuntimeException(e); }
+    }
+
+    public static void main(String[] args) throws IOException
     {
         Listener listener = new Listener();
         listener.Start();
