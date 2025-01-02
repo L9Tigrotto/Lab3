@@ -6,7 +6,6 @@ import java.util.Properties;
 
 public class ServerSettings extends Settings
 {
-    public int TCPPort;
     public int MaxHandledClients;
     public int TimeoutMS;
 

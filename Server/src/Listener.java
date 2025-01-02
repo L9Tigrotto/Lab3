@@ -52,11 +52,11 @@ public class Listener
 
     private void Listen()
     {
-        System.out.printf("[INFO] Listening on port %d. Type 'stop' to close the server\n", Main.SETTINGS.TCPPort);
+        System.out.printf("[INFO] Listening on port %d. Type 'stop' to close the server\n", Main.SETTINGS.TCP_PORT);
 
         BlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<Runnable>(Main.SETTINGS.MaxHandledClients);
         try (ExecutorService threadPool = new ThreadPoolExecutor(0, Main.SETTINGS.MaxHandledClients, 1, TimeUnit.SECONDS, taskQueue);
-             ServerSocket serverSocket = new ServerSocket(Main.SETTINGS.TCPPort))
+             ServerSocket serverSocket = new ServerSocket(Main.SETTINGS.TCP_PORT))
         {
             // set the serverSocket.accept() call blocking for 10 seconds before throwing a timeout exception
             // and check if _isStopRequested has set to true.
@@ -80,6 +80,6 @@ public class Listener
             throw new RuntimeException(e);
         }
 
-        System.out.printf("[INFO] Stopped listening on port %d.\n", Main.SETTINGS.TCPPort);
+        System.out.printf("[INFO] Stopped listening on port %d.\n", Main.SETTINGS.TCP_PORT);
     }
 }
