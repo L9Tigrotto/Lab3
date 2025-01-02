@@ -1,8 +1,12 @@
 
+import Messages.Message;
+import Messages.MessageKind;
+import Messages.TextMessage;
 import Network.Connection;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class ClientHandler implements Runnable
 {
@@ -18,13 +22,28 @@ public class ClientHandler implements Runnable
     {
         try
         {
-            int number = _connection.ReceiveInt();
+            TextMessage textMessage;
+            Message message;
 
-            while (true)
+            for (int i = 0; i < 10; i++)
             {
-                _connection.Send(number);
-                number = _connection.ReceiveInt() + 1;
-                System.out.println(number);
+                // request
+                message = _connection.Receive();
+
+                if (message.GetKind() != MessageKind.TextRequest)
+                {
+                    throw new SocketException();
+                }
+
+                textMessage = message.ToTextMessage();
+                System.out.printf("[INFO] Received '%s'.\n",
+                        textMessage.GetText());
+
+                // response
+                textMessage = new TextMessage(
+                        MessageKind.TextResponse,
+                        "Ciao from server " + (i + 1));
+                _connection.Send(textMessage.ToMessage());
             }
         }
         catch (IOException e) {

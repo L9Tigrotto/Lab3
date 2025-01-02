@@ -1,8 +1,13 @@
 
+import Messages.Message;
+import Messages.MessageKind;
+import Messages.TextMessage;
 import Network.Connection;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Properties;
 
 public class Main
@@ -27,12 +32,28 @@ public class Main
         catch (Exception e) { return; }
 
         Connection connection = new Connection(socket);
-        int number = 0;
-        while (true)
+        TextMessage textMessage;
+        Message message;
+
+        for (int i = 0; i < 10; i++)
         {
-            connection.Send(number);
-            number = connection.ReceiveInt() + 1;
-            System.out.printf("[INFO] Received %d from server.\n", number);
+            // request
+            textMessage = new TextMessage(
+                    MessageKind.TextRequest,
+                    "Ciao from client " + (i + 1));
+            connection.Send(textMessage.ToMessage());
+
+            // response
+            message = connection.Receive();
+
+            if (message.GetKind() != MessageKind.TextResponse)
+            {
+                throw new SocketException();
+            }
+
+            textMessage = message.ToTextMessage();
+            System.out.printf("[INFO] Received '%s'.\n",
+                    textMessage.GetText());
         }
     }
 }

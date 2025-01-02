@@ -14,4 +14,10 @@ public class Message
 
     public MessageKind GetKind() { return _kind; }
     public String GetData() { return _serializedData; }
+
+    public TextMessage ToTextMessage()
+    {
+        TextMessage msg = new TextMessage(_kind, _serializedData);
+        return msg;
+    }
 }

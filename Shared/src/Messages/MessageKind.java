@@ -14,6 +14,7 @@ public enum MessageKind
     InsertStopOrderRequest(true, 7),
     CancelOrderRequest(true, 8),
     GetPriceHistoryRequest(true, 9),
+    TextRequest(true, 10),
 
     // Response kind
     NullResponse(false, 0),
@@ -25,19 +26,24 @@ public enum MessageKind
     InsertMarketOrderResponse(false, 6),
     InsertStopOrderResponse(false, 7),
     CancelOrderResponse(false, 8),
-    GetPriceHistoryResponse(false, 9);
+    GetPriceHistoryResponse(false, 9),
+    TextResponse(false, 10);
 
     private final boolean _isRequest;
     private final int _code;
 
-    MessageKind(boolean isRequest, int code)
-    {
+    MessageKind(boolean isRequest, int code) {
         _isRequest = isRequest;
         _code = code;
     }
 
-    public boolean IsRequest() { return _isRequest; }
-    public boolean IsResponse() { return !_isRequest; }
+    public boolean IsRequest() {
+        return _isRequest;
+    }
+
+    public boolean IsResponse() {
+        return !_isRequest;
+    }
 
 
     /*
@@ -49,20 +55,19 @@ public enum MessageKind
      *                |                          |
      *        message type. Specifies the type of the message.
      * */
-    public int ToInt()
-    {
-        if (_isRequest) { return _code | (1 << 31); }
-        else { return _code; }
+    public int ToInt() {
+        if (_isRequest) {
+            return _code | (1 << 31);
+        } else {
+            return _code;
+        }
     }
 
-    public static MessageKind FromInt(int value)
-    {
+    public static MessageKind FromInt(int value) {
         int code = value & 0b01111111_11111111_11111111_11111111;
 
-        if (value < 0)
-        {
-            return switch (code)
-            {
+        if (value < 0) {
+            return switch (code) {
                 case 1 -> RegisterRequest;
                 case 2 -> UpdateCredentialsRequest;
                 case 3 -> LoginRequest;
@@ -72,13 +77,11 @@ public enum MessageKind
                 case 7 -> InsertStopOrderRequest;
                 case 8 -> CancelOrderRequest;
                 case 9 -> GetPriceHistoryRequest;
+                case 10 -> TextRequest;
                 default -> NullRequest;
             };
-        }
-        else
-        {
-            return switch (code)
-            {
+        } else {
+            return switch (code) {
                 case 1 -> RegisterResponse;
                 case 2 -> UpdateCredentialsResponse;
                 case 3 -> LoginResponse;
@@ -88,8 +91,9 @@ public enum MessageKind
                 case 7 -> InsertStopOrderResponse;
                 case 8 -> CancelOrderResponse;
                 case 9 -> GetPriceHistoryResponse;
+                case 10 -> TextResponse;
                 default -> NullResponse;
             };
         }
     }
-}
+    }

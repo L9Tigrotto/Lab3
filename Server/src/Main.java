@@ -19,7 +19,7 @@ public class                                                                    
         listener.Start();
 
         Scanner scanner = new Scanner(System.in);
-        while (!scanner.nextLine().equalsIgnoreCase("stop")) {  }
+        while (!scanner.nextLine().equalsIgnoreCase("stop")) { }
         listener.Stop();
     }
 
