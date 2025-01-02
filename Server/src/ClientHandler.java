@@ -35,9 +35,9 @@ public class ClientHandler implements Runnable
                     throw new SocketException();
                 }
 
-                textMessage = message.ToTextMessage();
-                System.out.printf("[INFO] Received '%s'.\n",
-                        textMessage.GetText());
+                //textMessage = message.ToTextMessage();
+                //System.out.printf("[INFO] Received '%s'.\n",
+                //  textMessage.GetText());
 
                 // response
                 textMessage = new TextMessage(

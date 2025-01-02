@@ -1,10 +1,8 @@
-import java.io.File;
-import java.io.FileReader;
+
+
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.Properties;
 
 public class Utilities
 {
