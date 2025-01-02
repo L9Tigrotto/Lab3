@@ -1,3 +1,4 @@
+
 set sharedCompilePaths=^
     .\Shared\src\*.java^
     .\Shared\src\DataStructures\*.java^
@@ -12,8 +13,11 @@ set clientCompilePaths=^
 set serverCompilePaths=^
     .\Server\src\*.java
 
-javac -d .\Build\Client %clientCompilePaths% %sharedCompilePaths%
-javac -d .\Build\Server %serverCompilePaths% %sharedCompilePaths%
+set librariesCompilePaths=^
+    .\Shared\Libraries\*;
+
+javac -d .\Build\Client -cp %librariesCompilePaths%  %clientCompilePaths% %sharedCompilePaths%
+javac -d .\Build\Server -cp %librariesCompilePaths% %serverCompilePaths% %sharedCompilePaths%
 
 
 set linkPaths=^
