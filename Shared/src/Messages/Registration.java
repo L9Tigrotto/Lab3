@@ -23,8 +23,8 @@ public class Registration implements ITransmittable
 
     public String GetUsername() { return _username; }
     public String GetPassword() { return _password; }
-    public boolean IsPasswordValid() { return _password.length() > 3; }
-    public boolean IsUsernameValid() { return _password.length() > 3; }
+    public boolean IsPasswordValid() { return _password.length() >= 3; }
+    public boolean IsUsernameValid() { return _username.length() >= 3; }
 
     public Message ToMessage()
     {
