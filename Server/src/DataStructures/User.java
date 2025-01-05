@@ -57,10 +57,15 @@ public class User
         _name = name;
         _password = password;
         _isConnected = false;
-        _users.put(name, this);
     }
 
     public static boolean Exists(String name) { return _users.containsKey(name); }
+
+    public static void Insert(String name, String password)
+    {
+        User user = new User(name, password);
+        _users.put(name, user);
+    }
 
     public static User FromName(String name) throws UserNotRegisteredException
     {

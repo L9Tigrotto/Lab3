@@ -1,7 +1,8 @@
 
 import Messages.Message;
 import Messages.MessageKind;
-import Messages.TextMessage;
+import Messages.RegisterRequest;
+import Messages.SimpleResponse;
 import Network.Connection;
 
 import java.io.IOException;
@@ -21,28 +22,21 @@ public class Main
         catch (Exception e) { return; }
 
         Connection connection = new Connection(socket);
-        TextMessage textMessage;
-        Message message;
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 1; i++)
         {
             // request
-            textMessage = new TextMessage(
-                    MessageKind.TextRequest,
-                    "Ciao from client " + (i + 1));
-            connection.Send(textMessage.ToMessage());
+            RegisterRequest registerRequest = new RegisterRequest("Leo", "1234");
+            connection.Send(registerRequest.ToMessage());
 
             // response
-            message = connection.Receive();
+            Message message = connection.Receive();
+            SimpleResponse simpleResponse = SimpleResponse.FromMessage(message);
 
-            if (message.GetKind() != MessageKind.TextResponse)
-            {
-                throw new SocketException();
-            }
-
-            //textMessage = message.ToTextMessage();
             System.out.printf("[INFO] Received '%s'.\n",
-                    textMessage.GetText());
+                    simpleResponse.GetErrorMessage());
         }
+
+        connection.Close();
     }
 }

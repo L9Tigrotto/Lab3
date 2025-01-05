@@ -1,7 +1,9 @@
 
+import DataStructures.User;
 import Messages.Message;
 import Messages.MessageKind;
-import Messages.TextMessage;
+import Messages.RegisterRequest;
+import Messages.SimpleResponse;
 import Network.Connection;
 
 import java.io.IOException;
@@ -22,28 +24,26 @@ public class ClientHandler implements Runnable
     {
         try
         {
-            TextMessage textMessage;
-            Message message;
-
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 1; i++)
             {
                 // request
-                message = _connection.Receive();
+                Message message = _connection.Receive();
 
-                if (message.GetKind() != MessageKind.TextRequest)
+                if (message.GetKind() != MessageKind.RegisterRequest)
                 {
                     throw new SocketException();
                 }
 
-                //textMessage = message.ToTextMessage();
-                //System.out.printf("[INFO] Received '%s'.\n",
-                //  textMessage.GetText());
+                RegisterRequest registerRequest = RegisterRequest.FromMessage(message);
+                if (registerRequest.GetPassword().isEmpty())
+                {
+                    // send error
+                }
 
-                // response
-                textMessage = new TextMessage(
-                        MessageKind.TextResponse,
-                        "Ciao from server " + (i + 1));
-                _connection.Send(textMessage.ToMessage());
+                User.Insert(registerRequest.GetUsername(), registerRequest.GetPassword());
+
+                SimpleResponse simpleResponse = new SimpleResponse(100, "OK");
+                _connection.Send(simpleResponse.ToMessage(MessageKind.RegisterResponse));
             }
         }
         catch (IOException e) {
