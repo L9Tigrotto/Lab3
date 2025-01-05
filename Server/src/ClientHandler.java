@@ -35,14 +35,14 @@ public class ClientHandler implements Runnable
                 _lastMessageTime.set(System.currentTimeMillis());
 
                 // client is not meant to receive response messages
-                if (message.GetKind().IsResponse())
+                if (message.GetType().IsResponse())
                 {
-                    System.out.printf("[Info] Received response message {%s}, ignoring\n", message.GetKind());
+                    System.out.printf("[Info] Received response message {%s}, ignoring\n", message.GetType());
                     continue;
                 }
 
                 // filter the request type and begin working on the response
-                switch (message.GetKind())
+                switch (message.GetType())
                 {
                     case RegisterRequest -> HandleRegisterRequest(message);
                     case UpdateCredentialsRequest -> HandleUpdateCredentialRequest(message);
@@ -55,7 +55,7 @@ public class ClientHandler implements Runnable
                     case GetPriceHistoryRequest -> HandleGetPriceHistoryRequest(message);
                     default ->
                     {
-                        System.out.printf("[Info] Received unknown response message %s, ignoring\n", message.GetKind());
+                        System.out.printf("[Info] Received unknown response message %s, ignoring\n", message.GetType());
                         continue;
                     }
                 }

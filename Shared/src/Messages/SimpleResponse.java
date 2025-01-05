@@ -15,7 +15,7 @@ public class SimpleResponse
     public int GetResponse() { return _response; }
     public String GetErrorMessage() { return _errorMessage; }
 
-    public Message ToMessage(MessageKind kind)
+    public Message ToMessage(MessageType kind)
     {
         String data = Message.JSON_BUILDER.toJson(this);
         return new Message(kind, data);

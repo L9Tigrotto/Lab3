@@ -2,7 +2,7 @@
 package Network;
 
 import Messages.Message;
-import Messages.MessageKind;
+import Messages.MessageType;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -24,7 +24,7 @@ public class Connection
 
     public Message Receive() throws IOException
     {
-        MessageKind kind = MessageKind.FromInt(_dataInputStream.readInt());
+        MessageType kind = MessageType.FromInt(_dataInputStream.readInt());
         String data = _dataInputStream.readUTF();
 
         return new Message(kind, data);
@@ -32,7 +32,7 @@ public class Connection
 
     public void Send(Message message) throws IOException
     {
-        _dataOutputStream.writeInt(message.GetKind().ToInt());
+        _dataOutputStream.writeInt(message.GetType().ToInt());
         _dataOutputStream.writeUTF(message.GetData());
     }
 

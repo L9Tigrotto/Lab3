@@ -1,7 +1,7 @@
 
 package Messages;
 
-public enum MessageKind
+public enum MessageType
 {
     // Request kind
     RegisterRequest(true, 1),
@@ -28,7 +28,7 @@ public enum MessageKind
     private final boolean _isRequest;
     private final int _code;
 
-    MessageKind(boolean isRequest, int code) {
+    MessageType(boolean isRequest, int code) {
         _isRequest = isRequest;
         _code = code;
     }
@@ -43,13 +43,13 @@ public enum MessageKind
 
 
     /*
-     *        xxxxxxxx_00000000_00000000_00000000
-     *       |        |
-     *        control part. Only specify if is a request or a response message atm.
+     *  xxxxxxxx_00000000_00000000_00000000
+     * |        |
+     *  control part. Only specify if is a request or a response message atm.
      *
-     *        00000000_xxxxxxxx_xxxxxxxx_xxxxxxxx
-     *                |                          |
-     *        message type. Specifies the type of the message.
+     *  00000000_xxxxxxxx_xxxxxxxx_xxxxxxxx
+     *          |                          |
+     *  message type. Specifies the type of the message.
      * */
     public int ToInt() {
         if (_isRequest) {
@@ -59,7 +59,7 @@ public enum MessageKind
         }
     }
 
-    public static MessageKind FromInt(int value) {
+    public static MessageType FromInt(int value) {
         int code = value & 0b01111111_11111111_11111111_11111111;
 
         if (value < 0) {

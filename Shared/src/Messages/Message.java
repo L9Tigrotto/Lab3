@@ -8,15 +8,15 @@ public class Message
 {
     public static final Gson JSON_BUILDER = new GsonBuilder().setPrettyPrinting().create();
 
-    private final MessageKind _kind;
+    private final MessageType _type;
     private final String _data;
 
-    public Message(MessageKind kind, String data)
+    public Message(MessageType kind, String data)
     {
-        _kind = kind;
+        _type = kind;
         _data = data;
     }
 
-    public MessageKind GetKind() { return _kind; }
+    public MessageType GetType() { return _type; }
     public String GetData() { return _data; }
 }

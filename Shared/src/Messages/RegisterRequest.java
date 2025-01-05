@@ -18,7 +18,7 @@ public class RegisterRequest
     public Message ToMessage()
     {
         String data = Message.JSON_BUILDER.toJson(this);
-        return new Message(MessageKind.RegisterRequest, data);
+        return new Message(MessageType.RegisterRequest, data);
     }
 
     public static RegisterRequest FromMessage(Message message)
