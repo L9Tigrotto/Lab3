@@ -72,7 +72,7 @@ public class Listener
             }
 
             threadPool.shutdown();
-            try { boolean closed = threadPool.awaitTermination(1, TimeUnit.MINUTES); }
+            try { boolean closed = threadPool.awaitTermination(5, TimeUnit.MINUTES); }
             catch (InterruptedException e) { throw new RuntimeException(e); }
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -19,7 +19,6 @@ public class Connection
         _dataOutputStream = new DataOutputStream(socket.getOutputStream());
     }
 
-    public boolean IsAlive() { return _socket.isConnected(); }
     public boolean IsDataAvailable() throws IOException { return _dataInputStream.available() > 0; }
 
     public Message Receive() throws IOException

@@ -23,14 +23,13 @@ public class ClientHandler implements Runnable
 
     public long GetLastMessageTime() { return _lastMessageTime.get(); }
 
-
     @Override
     public void run()
     {
         while (true)
         {
-            WaitForData();
-            if (!_connection.IsAlive()) { return; }
+            WaitForRequest();
+            if (GlobalData.LISTENER.IsStopRequested()) { return; }
 
             try
             {
@@ -89,11 +88,11 @@ public class ClientHandler implements Runnable
         }
     }
 
-    private void WaitForData()
+    private void WaitForRequest()
     {
         try
         {
-            while(!_connection.IsDataAvailable())
+            while(!GlobalData.LISTENER.IsStopRequested() && !_connection.IsDataAvailable())
             {
                 Thread.sleep(GlobalData.SETTINGS.ReadTimeoutMS);
                 boolean terminate = _lastMessageTime.get() + GlobalData.SETTINGS.InactiveTerminationMS < System.currentTimeMillis();
