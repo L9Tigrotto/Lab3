@@ -4,7 +4,6 @@ package Messages;
 public enum MessageKind
 {
     // Request kind
-    NullRequest(true, 0),
     RegisterRequest(true, 1),
     UpdateCredentialsRequest(true, 2),
     LoginRequest(true, 3),
@@ -14,10 +13,8 @@ public enum MessageKind
     InsertStopOrderRequest(true, 7),
     CancelOrderRequest(true, 8),
     GetPriceHistoryRequest(true, 9),
-    TextRequest(true, 10),
 
     // Response kind
-    NullResponse(false, 0),
     RegisterResponse(false, 1),
     UpdateCredentialsResponse(false, 2),
     LoginResponse(false, 3),
@@ -26,8 +23,7 @@ public enum MessageKind
     InsertMarketOrderResponse(false, 6),
     InsertStopOrderResponse(false, 7),
     CancelOrderResponse(false, 8),
-    GetPriceHistoryResponse(false, 9),
-    TextResponse(false, 10);
+    GetPriceHistoryResponse(false, 9);
 
     private final boolean _isRequest;
     private final int _code;
@@ -77,8 +73,7 @@ public enum MessageKind
                 case 7 -> InsertStopOrderRequest;
                 case 8 -> CancelOrderRequest;
                 case 9 -> GetPriceHistoryRequest;
-                case 10 -> TextRequest;
-                default -> NullRequest;
+                default -> throw new Error("Unknown code " + code);
             };
         } else {
             return switch (code) {
@@ -91,9 +86,8 @@ public enum MessageKind
                 case 7 -> InsertStopOrderResponse;
                 case 8 -> CancelOrderResponse;
                 case 9 -> GetPriceHistoryResponse;
-                case 10 -> TextResponse;
-                default -> NullResponse;
+                default -> throw new Error("Unknown code " + code);
             };
         }
     }
-    }
+}

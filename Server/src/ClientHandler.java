@@ -1,53 +1,122 @@
 
-import DataStructures.User;
 import Messages.Message;
-import Messages.MessageKind;
-import Messages.RegisterRequest;
-import Messages.SimpleResponse;
 import Network.Connection;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
-import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ClientHandler implements Runnable
 {
     private final Connection _connection;
+    private final AtomicLong _lastMessageTime;
 
     public ClientHandler(Socket socket) throws IOException
     {
         _connection = new Connection(socket);
+        _lastMessageTime = new AtomicLong(System.currentTimeMillis());
     }
+
+    public long GetLastMessageTime() { return _lastMessageTime.get(); }
+
 
     @Override
     public void run()
     {
-        try
+        while(_connection.IsAlive())
         {
-            for (int i = 0; i < 1; i++)
+            try
             {
-                // request
                 Message message = _connection.Receive();
 
-                if (message.GetKind() != MessageKind.RegisterRequest)
+                // update the last message time to prevent the daemon thread from terminating this task due to
+                // inactivity during the operation
+                _lastMessageTime.set(System.currentTimeMillis());
+
+                // client is not meant to receive response messages
+                if (message.GetKind().IsResponse())
                 {
-                    throw new SocketException();
+                    System.out.printf("[Info] Received response message {%s}, ignoring\n", message.GetKind());
+                    continue;
                 }
 
-                RegisterRequest registerRequest = RegisterRequest.FromMessage(message);
-                if (registerRequest.GetPassword().isEmpty())
+                // filter the request type and begin working on the response
+                switch (message.GetKind())
                 {
-                    // send error
+                    case RegisterRequest -> HandleRegisterRequest(message);
+                    case UpdateCredentialsRequest -> HandleUpdateCredentialRequest(message);
+                    case LoginRequest -> HandleLoginRequest(message);
+                    case LogoutRequest -> HandleLogoutRequest(message);
+                    case InsertLimitOrderRequest -> HandleInsertLimitOrderRequest(message);
+                    case InsertMarketOrderRequest -> HandleInsertMarketOrderRequest(message);
+                    case InsertStopOrderRequest -> HandleInsertStopOrderRequest(message);
+                    case CancelOrderRequest -> HandleCancelOrderRequest(message);
+                    case GetPriceHistoryRequest -> HandleGetPriceHistoryRequest(message);
+                    default ->
+                    {
+                        System.out.printf("[Info] Received unknown response message %s, ignoring\n", message.GetKind());
+                        continue;
+                    }
                 }
 
-                User.Insert(registerRequest.GetUsername(), registerRequest.GetPassword());
-
-                SimpleResponse simpleResponse = new SimpleResponse(100, "OK");
-                _connection.Send(simpleResponse.ToMessage(MessageKind.RegisterResponse));
+                // update the last message time to ensure the full inactivity period elapses
+                _lastMessageTime.set(System.currentTimeMillis());
+            }
+            catch (EOFException e)
+            {
+                System.out.println("[Warning] Socket closed");
+                return;
+            }
+            catch (IOException e) {
+                System.out.println(e.getMessage());
+                return;
             }
         }
-        catch (IOException e) {
-            return;
-        }
+    }
+
+    private void HandleRegisterRequest(Message message)
+    {
+
+    }
+
+    private void HandleUpdateCredentialRequest(Message message)
+    {
+
+    }
+
+    private void HandleLoginRequest(Message message)
+    {
+
+    }
+
+    private void HandleLogoutRequest(Message message)
+    {
+
+    }
+
+    private void HandleInsertLimitOrderRequest(Message message)
+    {
+
+    }
+
+    private void HandleInsertMarketOrderRequest(Message message)
+    {
+
+    }
+
+    private void HandleInsertStopOrderRequest(Message message)
+    {
+
+    }
+
+    private void HandleCancelOrderRequest(Message message)
+    {
+
+    }
+
+    private void HandleGetPriceHistoryRequest(Message message)
+    {
+
     }
 }
