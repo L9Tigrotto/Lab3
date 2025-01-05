@@ -1,5 +1,5 @@
 
-import DataStructures.User;
+import Users.User;
 
 import java.io.IOException;
 import java.util.Scanner;

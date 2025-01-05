@@ -1,5 +1,8 @@
 
-import Messages.Message;
+import Users.DuplicateUserException;
+import Users.User;
+import Network.Message;
+import Messages.Registration;
 import Network.Connection;
 
 import java.io.EOFException;
@@ -24,15 +27,14 @@ public class ClientHandler implements Runnable
     @Override
     public void run()
     {
-        while(_connection.IsAlive())
+        while (true)
         {
+            WaitForData();
+            if (!_connection.IsAlive()) { return; }
+
             try
             {
                 Message message = _connection.Receive();
-
-                // update the last message time to prevent the daemon thread from terminating this task due to
-                // inactivity during the operation
-                _lastMessageTime.set(System.currentTimeMillis());
 
                 // client is not meant to receive response messages
                 if (message.GetType().IsResponse())
@@ -66,18 +68,92 @@ public class ClientHandler implements Runnable
             catch (EOFException e)
             {
                 System.out.println("[Warning] Socket closed");
+                try { _connection.Close(); }
+                catch (IOException ioe)
+                {
+                    System.out.println("[Error] Generic error");
+                    System.err.println(ioe.getMessage());
+                }
                 return;
             }
-            catch (IOException e) {
-                System.out.println(e.getMessage());
+            catch (Exception e) {
+                System.err.println(e.getMessage());
+                try { _connection.Close(); }
+                catch (IOException ioe)
+                {
+                    System.out.println("[Error] Generic error");
+                    System.err.println(ioe.getMessage());
+                }
                 return;
             }
         }
     }
 
-    private void HandleRegisterRequest(Message message)
+    private void WaitForData()
     {
+        try
+        {
+            while(!_connection.IsDataAvailable())
+            {
+                Thread.sleep(GlobalData.SETTINGS.ReadTimeoutMS);
+                boolean terminate = _lastMessageTime.get() + GlobalData.SETTINGS.InactiveTerminationMS > System.currentTimeMillis();
+                if (terminate)
+                {
+                    System.out.println("[Warning] Inactive client detected, closing connection");
+                    _connection.Close();
+                    return;
+                }
+            }
+        }
+        catch (InterruptedException ignored) { }
+        catch (IOException e)
+        {
+            System.out.println("[Error] Generic error");
+            System.err.println(e.getMessage());
+        }
+    }
 
+    private void HandleRegisterRequest(Message message) throws IOException
+    {
+        try
+        {
+            Registration registerRequest = Registration.FromMessage(message);
+            String username = registerRequest.GetUsername();
+            String password = registerRequest.GetPassword();
+
+            if (!registerRequest.IsPasswordValid())
+            {
+                _connection.Send(Registration.INVALID_PASSWORD_RESPONSE);
+                return;
+            }
+
+            if (!registerRequest.IsPasswordValid() && !User.Exists(username))
+            {
+                _connection.Send(Registration.USERNAME_NOT_AVAILABLE_RESPONSE);
+                return;
+            }
+
+            try { User.Insert(username, password); }
+            catch (DuplicateUserException e)
+            {
+                _connection.Send(Registration.USERNAME_NOT_AVAILABLE_RESPONSE);
+                return;
+            }
+
+            _connection.Send(Registration.OK_RESPONSE);
+        }
+        catch (IOException e)
+        {
+            System.out.println("[Error] Unable to send response message");
+            System.err.println(e.getMessage());
+            _connection.Close();
+        }
+        catch (Exception e)
+        {
+            System.out.println("[Error] Generic error");
+            System.err.println(e.getMessage());
+            _connection.Send(Registration.OTHER_ERROR_CASES_RESPONSE);
+        }
     }
 
     private void HandleUpdateCredentialRequest(Message message)

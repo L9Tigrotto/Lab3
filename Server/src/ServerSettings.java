@@ -8,6 +8,8 @@ public class ServerSettings extends Settings
 {
     public int MaxHandledClients;
     public int AcceptTimeoutMS;
+    public int ReadTimeoutMS;
+    public int InactiveTerminationMS;
 
     public ServerSettings(String filename) throws IOException { super(filename); }
 
@@ -17,5 +19,7 @@ public class ServerSettings extends Settings
         super.Load(properties);
         MaxHandledClients = Integer.parseInt(properties.getProperty("MaxHandledClients"));
         AcceptTimeoutMS = Integer.parseInt(properties.getProperty("AcceptTimeoutMS"));
+        ReadTimeoutMS = Integer.parseInt(properties.getProperty("ReadTimeoutMS"));
+        InactiveTerminationMS = Integer.parseInt(properties.getProperty("InactiveTerminationMS"));
     }
 }
