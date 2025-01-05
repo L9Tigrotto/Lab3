@@ -4,50 +4,47 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Listener
 {
-    private boolean _isRunning;
-    private volatile boolean _isStopRequested; // made volatile to avoid thread to cache this value (always updated)
+    private final AtomicBoolean _isRunning;
+    private final AtomicBoolean _isStopRequested;
 
     private final Thread _thread = new Thread(this::Listen);
 
     public Listener()
     {
-        _isRunning = false;
-        _isStopRequested = false;
+        _isRunning = new AtomicBoolean(false);
+        _isStopRequested = new AtomicBoolean(false);
     }
 
-    public boolean IsRunning() { return _isRunning; }
-    public boolean IsStopRequested() { return _isStopRequested; }
+    public boolean IsRunning() { return _isRunning.get(); }
+    public boolean IsStopRequested() { return _isStopRequested.get(); }
 
-    public synchronized void Start()
+    public void Start()
     {
-        if (_isRunning)
+        if (_isRunning.compareAndExchange(false, true))
         {
             System.out.println("[Warning] Server is already running");
             return;
         }
 
         _thread.start();
-        _isRunning = true;
     }
 
-    public synchronized void Stop()
+    public void Stop()
     {
-        if (!_isRunning)
+        if (!_isRunning.compareAndExchange(true, false))
         {
             System.out.println("[Warning] Server is not running.");
             return;
         }
-        _isStopRequested = true;
 
         System.out.println("[INFO] Waiting for server to stop...");
+        _isStopRequested.set(true);
         try { _thread.join(); }
         catch (InterruptedException e) { throw new RuntimeException(e); }
-
-        _isRunning = false;
-        _isStopRequested = false;
     }
 
     private void Listen()
@@ -55,14 +52,15 @@ public class Listener
         System.out.printf("[INFO] Listening on port %d. Type 'stop' to close the server\n", GlobalData.SETTINGS.TCP_PORT);
 
         BlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<Runnable>(GlobalData.SETTINGS.MaxHandledClients);
-        try (ExecutorService threadPool = new ThreadPoolExecutor(0, GlobalData.SETTINGS.MaxHandledClients, 1, TimeUnit.SECONDS, taskQueue);
+        try (ExecutorService threadPool = new ThreadPoolExecutor(0, GlobalData.SETTINGS.MaxHandledClients,
+                1, TimeUnit.SECONDS, taskQueue);
              ServerSocket serverSocket = new ServerSocket(GlobalData.SETTINGS.TCP_PORT))
         {
-            // set the serverSocket.accept() call blocking for 10 seconds before throwing a timeout exception
+            // set the serverSocket.accept() call blocking for AcceptTimeoutMS ms before throwing a timeout exception
             // and check if _isStopRequested has set to true.
-            serverSocket.setSoTimeout(10 * 1000);
+            serverSocket.setSoTimeout(GlobalData.SETTINGS.AcceptTimeoutMS);
 
-            while (!_isStopRequested)
+            while (!_isStopRequested.compareAndSet(true, false))
             {
                 try
                 {

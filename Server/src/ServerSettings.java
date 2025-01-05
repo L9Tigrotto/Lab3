@@ -7,7 +7,7 @@ import java.util.Properties;
 public class ServerSettings extends Settings
 {
     public int MaxHandledClients;
-    public int TimeoutMS;
+    public int AcceptTimeoutMS;
 
     public ServerSettings(String filename) throws IOException { super(filename); }
 
@@ -16,6 +16,6 @@ public class ServerSettings extends Settings
     {
         super.Load(properties);
         MaxHandledClients = Integer.parseInt(properties.getProperty("MaxHandledClients"));
-        TimeoutMS = Integer.parseInt(properties.getProperty("TimeoutMS"));
+        AcceptTimeoutMS = Integer.parseInt(properties.getProperty("AcceptTimeoutMS"));
     }
 }
