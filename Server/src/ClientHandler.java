@@ -127,7 +127,7 @@ public class ClientHandler implements Runnable
                 return;
             }
 
-            if (!registerRequest.IsPasswordValid() && !User.Exists(username))
+            if (!registerRequest.IsUsernameValid() && !User.Exists(username))
             {
                 _connection.Send(Registration.USERNAME_NOT_AVAILABLE_RESPONSE);
                 return;
