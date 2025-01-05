@@ -96,7 +96,7 @@ public class ClientHandler implements Runnable
             while(!_connection.IsDataAvailable())
             {
                 Thread.sleep(GlobalData.SETTINGS.ReadTimeoutMS);
-                boolean terminate = _lastMessageTime.get() + GlobalData.SETTINGS.InactiveTerminationMS > System.currentTimeMillis();
+                boolean terminate = _lastMessageTime.get() + GlobalData.SETTINGS.InactiveTerminationMS < System.currentTimeMillis();
                 if (terminate)
                 {
                     System.out.println("[Warning] Inactive client detected, closing connection");
