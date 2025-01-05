@@ -8,8 +8,7 @@ public class Main
 {
     public static void main(String[] args) throws IOException
     {
-        Listener listener = new Listener();
-        listener.Start();
+        GlobalData.LISTENER.Start();
 
         Scanner scanner = new Scanner(System.in);
         while (!scanner.nextLine().equalsIgnoreCase("stop"))
@@ -17,7 +16,7 @@ public class Main
             System.out.println("[Info] Enter 'stop' to stop the server");
         }
 
-        listener.Stop();
+        GlobalData.LISTENER.Stop();
         User.Save();
     }
 
