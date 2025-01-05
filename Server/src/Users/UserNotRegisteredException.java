@@ -1,5 +1,5 @@
 
-package DataStructures;
+package Users;
 
 public class UserNotRegisteredException extends Exception
 {

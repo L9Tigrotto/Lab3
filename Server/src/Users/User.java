@@ -1,5 +1,5 @@
 
-package DataStructures;
+package Users;
 
 import com.google.gson.FormattingStyle;
 import com.google.gson.JsonIOException;
@@ -48,29 +48,30 @@ public class User
         }
     }
 
-    private final String _name;
+    private final String _username;
     private final String _password;
     private transient boolean _isConnected; // not serialized
 
-    public User(String name, String password)
+    private User(String name, String password)
     {
-        _name = name;
+        _username = name;
         _password = password;
         _isConnected = false;
     }
 
     public static boolean Exists(String name) { return _users.containsKey(name); }
 
-    public static void Insert(String name, String password)
+    public static synchronized void Insert(String username, String password) throws DuplicateUserException
     {
-        User user = new User(name, password);
-        _users.put(name, user);
+        User user = new User(username, password);
+        if (_users.putIfAbsent(username, user) != null) { throw new DuplicateUserException(""); }
     }
 
     public static User FromName(String name) throws UserNotRegisteredException
     {
-        if (!Exists(name)) { throw new UserNotRegisteredException(); }
-        return  _users.get(name);
+        User user = _users.get(name);
+        if (user == null) { throw new UserNotRegisteredException(); }
+        return user;
     }
 
     public static boolean IsConnected(String name) throws UserNotRegisteredException
@@ -96,7 +97,7 @@ public class User
             Set<Map.Entry<String, User>> entrySet = _users.entrySet();
             for (Map.Entry<String, User> entry : entrySet) {
                 jsonWriter.beginObject();
-                jsonWriter.name("name").value(entry.getValue()._name);
+                jsonWriter.name("name").value(entry.getValue()._username);
                 jsonWriter.name("password").value(entry.getValue()._password);
                 jsonWriter.endObject();
             }
