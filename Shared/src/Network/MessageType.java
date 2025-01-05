@@ -1,5 +1,5 @@
 
-package Messages;
+package Network;
 
 public enum MessageType
 {
@@ -15,15 +15,8 @@ public enum MessageType
     GetPriceHistoryRequest(true, 9),
 
     // Response kind
-    RegisterResponse(false, 1),
-    UpdateCredentialsResponse(false, 2),
-    LoginResponse(false, 3),
-    LogoutResponse(false, 4),
-    InsertLimitOrderResponse(false, 5),
-    InsertMarketOrderResponse(false, 6),
-    InsertStopOrderResponse(false, 7),
-    CancelOrderResponse(false, 8),
-    GetPriceHistoryResponse(false, 9);
+    SimpleResponse(false, 1),
+    OrderResponse(false, 2);
 
     private final boolean _isRequest;
     private final int _code;
@@ -77,15 +70,8 @@ public enum MessageType
             };
         } else {
             return switch (code) {
-                case 1 -> RegisterResponse;
-                case 2 -> UpdateCredentialsResponse;
-                case 3 -> LoginResponse;
-                case 4 -> LogoutResponse;
-                case 5 -> InsertLimitOrderResponse;
-                case 6 -> InsertMarketOrderResponse;
-                case 7 -> InsertStopOrderResponse;
-                case 8 -> CancelOrderResponse;
-                case 9 -> GetPriceHistoryResponse;
+                case 1 -> SimpleResponse;
+                case 2 -> OrderResponse;
                 default -> throw new Error("Unknown code " + code);
             };
         }

@@ -1,7 +1,11 @@
 
 package Messages;
 
-public class SimpleResponse
+import Network.ITransmittable;
+import Network.Message;
+import Network.MessageType;
+
+public class SimpleResponse implements ITransmittable
 {
     private final int _response;
     private final String _errorMessage;
@@ -15,10 +19,10 @@ public class SimpleResponse
     public int GetResponse() { return _response; }
     public String GetErrorMessage() { return _errorMessage; }
 
-    public Message ToMessage(MessageType kind)
+    public Message ToMessage()
     {
         String data = Message.JSON_BUILDER.toJson(this);
-        return new Message(kind, data);
+        return new Message(MessageType.RegisterRequest, data);
     }
 
     public static SimpleResponse FromMessage(Message message)

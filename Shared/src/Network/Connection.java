@@ -1,9 +1,6 @@
 
 package Network;
 
-import Messages.Message;
-import Messages.MessageType;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -22,6 +19,9 @@ public class Connection
         _dataOutputStream = new DataOutputStream(socket.getOutputStream());
     }
 
+    public boolean IsAlive() { return _socket.isConnected(); }
+    public boolean IsDataAvailable() throws IOException { return _dataInputStream.available() > 0; }
+
     public Message Receive() throws IOException
     {
         MessageType kind = MessageType.FromInt(_dataInputStream.readInt());
@@ -30,8 +30,9 @@ public class Connection
         return new Message(kind, data);
     }
 
-    public void Send(Message message) throws IOException
+    public void Send(ITransmittable transmittable) throws IOException
     {
+        Message message = transmittable.ToMessage();
         _dataOutputStream.writeInt(message.GetType().ToInt());
         _dataOutputStream.writeUTF(message.GetData());
     }
