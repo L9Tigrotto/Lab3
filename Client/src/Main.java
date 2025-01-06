@@ -1,8 +1,7 @@
 
-import Messages.Registration;
+import Messages.RegisterRequest;
 import Messages.SimpleResponse;
 import Network.Connection;
-import Network.Message;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -12,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class Main
 {
-    public static void main(String[] args)
+    public static void main(String[] args) throws IOException
     {
         Socket socket;
         try { socket = Utilities.TryConnect(
@@ -70,17 +69,16 @@ public class Main
 
         String username = words[1];
         String password = Arrays.stream(words).skip(2).collect(Collectors.joining(" "));
-        Registration registration = new Registration(username, password);
+        RegisterRequest registerRequest = new RegisterRequest(username, password);
 
-        try { connection.Send(registration); }
+        try { connection.SendRequest(registerRequest); }
         catch (IOException e) { return false; }
 
-        Message message;
-        try { message = connection.Receive(); }
+        SimpleResponse response;
+        try { response = (SimpleResponse) connection.ReceiveResponse(); }
         catch (IOException e) { return false; }
 
-        SimpleResponse simpleResponse = SimpleResponse.FromMessage(message);
-        System.out.printf("Code: %d, message: %s\n", simpleResponse.GetResponse(), simpleResponse.GetErrorMessage());
+        System.out.printf("Code: %d, message: %s\n", response.GetResponse(), response.GetErrorMessage());
         return true;
     }
 }

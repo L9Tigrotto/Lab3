@@ -1,8 +1,9 @@
 
+import Network.ITransmittable;
 import Users.DuplicateUserException;
 import Users.User;
-import Network.Message;
-import Messages.Registration;
+import Network.Request;
+import Messages.RegisterRequest;
 import Network.Connection;
 
 import java.io.EOFException;
@@ -33,30 +34,23 @@ public class ClientHandler implements Runnable
 
             try
             {
-                Message message = _connection.Receive();
-
-                // client is not meant to receive response messages
-                if (message.GetType().IsResponse())
-                {
-                    System.out.printf("[Info] Received response message {%s}, ignoring\n", message.GetType());
-                    continue;
-                }
+                ITransmittable transmittable = _connection.ReceiveRequest();
 
                 // filter the request type and begin working on the response
-                switch (message.GetType())
+                switch (transmittable.GetOperation())
                 {
-                    case RegisterRequest -> HandleRegisterRequest(message);
-                    case UpdateCredentialsRequest -> HandleUpdateCredentialRequest(message);
-                    case LoginRequest -> HandleLoginRequest(message);
-                    case LogoutRequest -> HandleLogoutRequest(message);
-                    case InsertLimitOrderRequest -> HandleInsertLimitOrderRequest(message);
-                    case InsertMarketOrderRequest -> HandleInsertMarketOrderRequest(message);
-                    case InsertStopOrderRequest -> HandleInsertStopOrderRequest(message);
-                    case CancelOrderRequest -> HandleCancelOrderRequest(message);
-                    case GetPriceHistoryRequest -> HandleGetPriceHistoryRequest(message);
+                    case "register" -> HandleRegisterRequest((RegisterRequest) transmittable);
+                    case "login" -> HandleUpdateCredentialRequest(transmittable);
+                    case "logout" -> HandleLoginRequest(transmittable);
+                    case "insertLimitOrder" -> HandleLogoutRequest(transmittable);
+                    case "insertMarketOrder" -> HandleInsertLimitOrderRequest(transmittable);
+                    case "insertStopOrder" -> HandleInsertMarketOrderRequest(transmittable);
+                    case "cancelOrder" -> HandleInsertStopOrderRequest(transmittable);
+                    case "getPriceHistory" -> HandleCancelOrderRequest(transmittable);
+                    case "closedTrades" -> HandleGetPriceHistoryRequest(transmittable);
                     default ->
                     {
-                        System.out.printf("[Info] Received unknown response message %s, ignoring\n", message.GetType());
+                        System.out.printf("[Info] Received unknown request message %s, ignoring\n", transmittable.GetOperation());
                         continue;
                     }
                 }
@@ -112,34 +106,33 @@ public class ClientHandler implements Runnable
         }
     }
 
-    private void HandleRegisterRequest(Message message) throws IOException
+    private void HandleRegisterRequest(RegisterRequest register) throws IOException
     {
         try
         {
-            Registration registerRequest = Registration.FromMessage(message);
-            String username = registerRequest.GetUsername();
-            String password = registerRequest.GetPassword();
+            String username = register.GetUsername();
+            String password = register.GetPassword();
 
-            if (!registerRequest.IsPasswordValid())
+            if (!register.IsPasswordValid())
             {
-                _connection.Send(Registration.INVALID_PASSWORD_RESPONSE);
+                _connection.SendResponse(RegisterRequest.INVALID_PASSWORD_RESPONSE);
                 return;
             }
 
-            if (!registerRequest.IsUsernameValid() && !User.Exists(username))
+            if (!register.IsUsernameValid() && !User.Exists(username))
             {
-                _connection.Send(Registration.USERNAME_NOT_AVAILABLE_RESPONSE);
+                _connection.SendResponse(RegisterRequest.USERNAME_NOT_AVAILABLE_RESPONSE);
                 return;
             }
 
             try { User.Insert(username, password); }
             catch (DuplicateUserException e)
             {
-                _connection.Send(Registration.USERNAME_NOT_AVAILABLE_RESPONSE);
+                _connection.SendResponse(RegisterRequest.USERNAME_NOT_AVAILABLE_RESPONSE);
                 return;
             }
 
-            _connection.Send(Registration.OK_RESPONSE);
+            _connection.SendResponse(RegisterRequest.OK_RESPONSE);
         }
         catch (IOException e)
         {
@@ -151,46 +144,46 @@ public class ClientHandler implements Runnable
         {
             System.out.println("[Error] Generic error");
             System.err.println(e.getMessage());
-            _connection.Send(Registration.OTHER_ERROR_CASES_RESPONSE);
+            _connection.SendResponse(RegisterRequest.OTHER_ERROR_CASES_RESPONSE);
         }
     }
 
-    private void HandleUpdateCredentialRequest(Message message)
+    private void HandleUpdateCredentialRequest(ITransmittable transmittable) throws IOException
     {
 
     }
 
-    private void HandleLoginRequest(Message message)
+    private void HandleLoginRequest(ITransmittable transmittable)
     {
 
     }
 
-    private void HandleLogoutRequest(Message message)
+    private void HandleLogoutRequest(ITransmittable transmittable)
     {
 
     }
 
-    private void HandleInsertLimitOrderRequest(Message message)
+    private void HandleInsertLimitOrderRequest(ITransmittable transmittable)
     {
 
     }
 
-    private void HandleInsertMarketOrderRequest(Message message)
+    private void HandleInsertMarketOrderRequest(ITransmittable transmittable)
     {
 
     }
 
-    private void HandleInsertStopOrderRequest(Message message)
+    private void HandleInsertStopOrderRequest(ITransmittable transmittable)
     {
 
     }
 
-    private void HandleCancelOrderRequest(Message message)
+    private void HandleCancelOrderRequest(ITransmittable transmittable)
     {
 
     }
 
-    private void HandleGetPriceHistoryRequest(Message message)
+    private void HandleGetPriceHistoryRequest(ITransmittable transmittable)
     {
 
     }
