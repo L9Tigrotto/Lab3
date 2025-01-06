@@ -10,32 +10,49 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * This class represents a handler for a connected client. It is responsible for receiving requests from the client,
+ * processing them, and sending responses back. The handler also monitors for client inactivity and disconnects idle clients.
+ */
 public class ClientHandler implements Runnable
 {
+    // the connection object for communication with the client
     private final Connection _connection;
-    private final AtomicLong _lastMessageTime;
 
+    // tracks the timestamp of the last received message from the client
+    private long _lastMessageTime;
+
+    /**
+     * Constructs a new ClientHandler object for the given client socket.
+     *
+     * @param socket The socket representing the connected client.
+     * @throws IOException If an I/O error occurs during connection setup.
+     */
     public ClientHandler(Socket socket) throws IOException
     {
         _connection = new Connection(socket);
-        _lastMessageTime = new AtomicLong(System.currentTimeMillis());
+        _lastMessageTime = System.currentTimeMillis();
     }
 
-    public long GetLastMessageTime() { return _lastMessageTime.get(); }
-
+    /**
+     * The main loop of the client handler thread. It continuously waits for requests from the client, processes them,
+     * and sends responses. The loop exits when the server is shutting down or the client disconnects.
+     */
     @Override
     public void run()
     {
         while (true)
         {
+            // wait for a request from the client, handle disconnection or server shutdown during the wait
             WaitForRequest();
             if (GlobalData.LISTENER.IsStopRequested()) { return; }
 
             try
             {
+                // receive the request from the client
                 Request request = _connection.ReceiveRequest();
 
-                // filter the request type and begin working on the response
+                // handle the request based on its operation type
                 switch (request.GetOperation())
                 {
                     case "register" -> HandleRegisterRequest((RegisterRequest) request);
@@ -54,8 +71,8 @@ public class ClientHandler implements Runnable
                     }
                 }
 
-                // update the last message time to ensure the full inactivity period elapses
-                _lastMessageTime.set(System.currentTimeMillis());
+                // Update the last message time to track client activity
+                _lastMessageTime = System.currentTimeMillis();
             }
             catch (EOFException e)
             {
@@ -81,14 +98,19 @@ public class ClientHandler implements Runnable
         }
     }
 
+    /**
+     * Waits for data to be available on the client socket, with a timeout mechanism. If no data is received within
+     * the timeout period and the client has been inactive for longer than the configured threshold, the connection
+     * is considered inactive and closed.
+     */
     private void WaitForRequest()
     {
         try
         {
             while(!GlobalData.LISTENER.IsStopRequested() && !_connection.IsDataAvailable())
             {
-                Thread.sleep(GlobalData.SETTINGS.ReadTimeoutMS);
-                boolean terminate = _lastMessageTime.get() + GlobalData.SETTINGS.InactiveTerminationMS < System.currentTimeMillis();
+                Thread.sleep(GlobalData.SETTINGS.WaitDataTimeoutMS);
+                boolean terminate = _lastMessageTime + GlobalData.SETTINGS.ClientInactiveThresholdMS < System.currentTimeMillis();
                 if (terminate)
                 {
                     System.out.println("[Warning] Inactive client detected, closing connection");
@@ -105,6 +127,15 @@ public class ClientHandler implements Runnable
         }
     }
 
+    /**
+     * Handles a registration request from the client.
+     *
+     * This method validates the provided username and password, attempts to create a new user account,
+     * and sends an appropriate response to the client based on the outcome of the registration process.
+     *
+     * @param register The registration request received from the client.
+     * @throws IOException If an I/O error occurs while sending the response to the client.
+     */
     private void HandleRegisterRequest(RegisterRequest register) throws IOException
     {
         try

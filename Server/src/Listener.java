@@ -51,14 +51,14 @@ public class Listener
     {
         System.out.printf("[INFO] Listening on port %d. Type 'stop' to close the server\n", GlobalData.SETTINGS.TCP_PORT);
 
-        BlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<Runnable>(GlobalData.SETTINGS.MaxHandledClients);
-        try (ExecutorService threadPool = new ThreadPoolExecutor(0, GlobalData.SETTINGS.MaxHandledClients,
+        BlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<Runnable>(GlobalData.SETTINGS.MaxConcurrentClients);
+        try (ExecutorService threadPool = new ThreadPoolExecutor(0, GlobalData.SETTINGS.MaxConcurrentClients,
                 1, TimeUnit.SECONDS, taskQueue);
              ServerSocket serverSocket = new ServerSocket(GlobalData.SETTINGS.TCP_PORT))
         {
             // set the serverSocket.accept() call blocking for AcceptTimeoutMS ms before throwing a timeout exception
             // and check if _isStopRequested has set to true.
-            serverSocket.setSoTimeout(GlobalData.SETTINGS.AcceptTimeoutMS);
+            serverSocket.setSoTimeout(GlobalData.SETTINGS.AcceptClientTimeoutMS);
 
             while (!_isStopRequested.compareAndSet(true, false))
             {
