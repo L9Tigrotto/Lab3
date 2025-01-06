@@ -71,7 +71,7 @@ public class Main
         String password = Arrays.stream(words).skip(2).collect(Collectors.joining(" "));
         RegisterRequest registerRequest = new RegisterRequest(username, password);
 
-        try { connection.SendRequest(registerRequest); }
+        try { connection.Send(registerRequest); }
         catch (IOException e) { return false; }
 
         SimpleResponse response;

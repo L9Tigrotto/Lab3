@@ -9,26 +9,30 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-public class Response
+public abstract class Response
 {
-    public static String ToJson(ITransmittable transmittable)
+    public Response() { }
+
+    public String ToJson()
     {
         StringWriter stringWriter = new StringWriter();
         try (JsonWriter jsonWriter = new JsonWriter(stringWriter);)
         {
             jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
             jsonWriter.beginObject();
-            transmittable.ToJson(jsonWriter);
+            SerializeContent(jsonWriter);
             jsonWriter.endObject();
         } catch (IOException e) { throw new RuntimeException(e); }
 
         return stringWriter.toString();
     }
 
-    public static ITransmittable FromJson(String json) throws IOException
+    protected abstract void SerializeContent(JsonWriter jsonWriter) throws IOException;
+
+    public static Response FromJson(String json) throws IOException
     {
         String temp;
-        ITransmittable transmittable;
+        Response response;
 
         try (StringReader stringReader = new StringReader(json);
              JsonReader jsonReader = new JsonReader(stringReader))
@@ -39,14 +43,14 @@ public class Response
 
             switch (temp)
             {
-                case "response" -> transmittable = SimpleResponse.FromJson(jsonReader);
-                case "orderID" -> transmittable = SimpleResponse.FromJson(jsonReader);
+                case "response" -> response = SimpleResponse.FromJson(jsonReader);
+                case "orderID" -> response = SimpleResponse.FromJson(jsonReader);
                 default -> throw new IOException("Supposed to read a valid transmittable name from JSON (got " + temp + ")");
             }
 
             jsonReader.endObject();
         }
 
-        return transmittable;
+        return response;
     }
 }

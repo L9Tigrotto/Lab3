@@ -1,13 +1,13 @@
 
 package Messages;
 
-import Network.ITransmittable;
+import Network.Request;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 
-public class RegisterRequest implements ITransmittable
+public class RegisterRequest extends Request
 {
     public static final SimpleResponse OK_RESPONSE = new SimpleResponse(100, "OK");
     public static final SimpleResponse INVALID_PASSWORD_RESPONSE = new SimpleResponse(101, "Invalid Password");
@@ -19,6 +19,7 @@ public class RegisterRequest implements ITransmittable
 
     public RegisterRequest(String username, String password)
     {
+        super("register");
         _username = username;
         _password = password;
     }
@@ -28,15 +29,13 @@ public class RegisterRequest implements ITransmittable
     public boolean IsPasswordValid() { return _password.length() >= 3; }
     public boolean IsUsernameValid() { return _username.length() >= 3; }
 
-    public String GetOperation() { return "register"; }
-
-    public void ToJson(JsonWriter jsonWriter) throws IOException
+    protected void SerializeContent(JsonWriter jsonWriter) throws IOException
     {
         jsonWriter.name("username").value(_username);
         jsonWriter.name("password").value(_password);
     }
 
-    public static RegisterRequest FromJson(JsonReader jsonReader) throws IOException
+    public static RegisterRequest DeserializeContent(JsonReader jsonReader) throws IOException
     {
         String temp = jsonReader.nextName();
         if (!temp.equals("username")) { throw new IOException("Supposed to read 'username' from JSON (got " + temp + ")"); }

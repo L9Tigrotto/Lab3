@@ -10,9 +10,18 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-public class Request
+public abstract class Request
 {
-    public static String ToJson(ITransmittable transmittable)
+    private final String _operation;
+
+    public Request(String operation)
+    {
+        _operation = operation;
+    }
+
+    public String GetOperation() { return _operation; }
+
+    public String ToJson()
     {
         StringWriter stringWriter = new StringWriter();
         try (JsonWriter jsonWriter = new JsonWriter(stringWriter);)
@@ -20,10 +29,10 @@ public class Request
             jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
             jsonWriter.beginObject();
 
-            jsonWriter.name("operation").value(transmittable.GetOperation());
+            jsonWriter.name("operation").value(_operation);
             jsonWriter.name("values");
             jsonWriter.beginObject();
-            transmittable.ToJson(jsonWriter);
+            SerializeContent(jsonWriter);
             jsonWriter.endObject();
 
             jsonWriter.endObject();
@@ -32,11 +41,13 @@ public class Request
         return stringWriter.toString();
     }
 
-    public static ITransmittable FromJson(String json) throws IOException
+    protected abstract void SerializeContent(JsonWriter jsonWriter) throws IOException;
+
+    public static Request FromJson(String json) throws IOException
     {
         String temp;
         String operation;
-        ITransmittable transmittable;
+        Request request;
 
         try (StringReader stringReader = new StringReader(json);
             JsonReader jsonReader = new JsonReader(stringReader))
@@ -54,7 +65,7 @@ public class Request
 
             switch (operation)
             {
-                case "register" -> transmittable = RegisterRequest.FromJson(jsonReader);
+                case "register" -> request = RegisterRequest.DeserializeContent(jsonReader);
                 default -> throw new IOException("Supposed to read a valid transmittable name from JSON (got " + temp + ")");
             }
 
@@ -63,6 +74,6 @@ public class Request
             jsonReader.endObject();
         }
 
-        return transmittable;
+        return request;
     }
 }

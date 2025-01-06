@@ -21,25 +21,10 @@ public class Connection
 
     public boolean IsDataAvailable() throws IOException { return _dataInputStream.available() > 0; }
 
-    public ITransmittable ReceiveRequest() throws IOException
-    {
-        return Request.FromJson(_dataInputStream.readUTF());
-    }
-
-    public ITransmittable ReceiveResponse() throws IOException
-    {
-        return Response.FromJson(_dataInputStream.readUTF());
-    }
-
-    public void SendRequest(ITransmittable transmittable) throws IOException
-    {
-        _dataOutputStream.writeUTF(Request.ToJson(transmittable));
-    }
-
-    public void SendResponse(ITransmittable transmittable) throws IOException
-    {
-        _dataOutputStream.writeUTF(Response.ToJson(transmittable));
-    }
+    public Request ReceiveRequest() throws IOException { return Request.FromJson(_dataInputStream.readUTF()); }
+    public Response ReceiveResponse() throws IOException { return Response.FromJson(_dataInputStream.readUTF()); }
+    public void Send(Request request) throws IOException { _dataOutputStream.writeUTF(request.ToJson()); }
+    public void Send(Response response) throws IOException { _dataOutputStream.writeUTF(response.ToJson()); }
 
     public void Close() throws IOException
     {
