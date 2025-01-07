@@ -2,6 +2,7 @@
 package Network;
 
 import Messages.RegisterRequest;
+import Messages.UpdateCredentialsRequest;
 import com.google.gson.FormattingStyle;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -117,6 +118,7 @@ public abstract class Request
             switch (operation)
             {
                 case "register" -> request = RegisterRequest.DeserializeContent(jsonReader);
+                case "updateCredentials" -> request = UpdateCredentialsRequest.DeserializeContent(jsonReader);
                 default -> throw new IOException("Supposed to read a valid transmittable name from JSON (got " + temp + ")");
             }
 

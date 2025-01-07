@@ -1,4 +1,5 @@
 
+import Messages.UpdateCredentialsRequest;
 import Network.Request;
 import Users.DuplicateUserException;
 import Users.User;
@@ -8,7 +9,6 @@ import Network.Connection;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class represents a handler for a connected client. It is responsible for receiving requests from the client,
@@ -56,7 +56,8 @@ public class ClientHandler implements Runnable
                 switch (request.GetOperation())
                 {
                     case "register" -> HandleRegisterRequest((RegisterRequest) request);
-                    case "login" -> HandleUpdateCredentialRequest(request);
+                    case "updateCredentials" -> HandleUpdateCredentialRequest((UpdateCredentialsRequest) request);
+                    case "login" -> HandleLoginRequest(request);
                     case "logout" -> HandleLoginRequest(request);
                     case "insertLimitOrder" -> HandleLogoutRequest(request);
                     case "insertMarketOrder" -> HandleInsertLimitOrderRequest(request);
@@ -143,44 +144,96 @@ public class ClientHandler implements Runnable
             String username = register.GetUsername();
             String password = register.GetPassword();
 
-            if (!register.IsPasswordValid())
+            if (!User.IsUsernameValid(username) || User.Exists(username))
             {
-                _connection.Send(RegisterRequest.INVALID_PASSWORD_RESPONSE);
+                _connection.Send(RegisterRequest.USERNAME_NOT_AVAILABLE);
                 return;
             }
 
-            if (!register.IsUsernameValid() && !User.Exists(username))
+            if (!User.IsPasswordValid(password))
             {
-                _connection.Send(RegisterRequest.USERNAME_NOT_AVAILABLE_RESPONSE);
+                _connection.Send(RegisterRequest.INVALID_PASSWORD);
                 return;
             }
 
             try { User.Insert(username, password); }
             catch (DuplicateUserException e)
             {
-                _connection.Send(RegisterRequest.USERNAME_NOT_AVAILABLE_RESPONSE);
+                _connection.Send(RegisterRequest.USERNAME_NOT_AVAILABLE);
                 return;
             }
 
-            _connection.Send(RegisterRequest.OK_RESPONSE);
+            _connection.Send(RegisterRequest.OK);
         }
         catch (IOException e)
         {
-            System.out.println("[Error] Unable to send response message");
-            System.err.println(e.getMessage());
+            System.out.printf("[Error] %s\n", e.getMessage());
             _connection.Close();
         }
         catch (Exception e)
         {
-            System.out.println("[Error] Generic error");
-            System.err.println(e.getMessage());
-            _connection.Send(RegisterRequest.OTHER_ERROR_CASES_RESPONSE);
+            System.out.printf("[Error] %s\n", e.getMessage());
+            _connection.Send(RegisterRequest.OTHER_ERROR_CASES);
         }
     }
 
-    private void HandleUpdateCredentialRequest(Request request) throws IOException
+    private void HandleUpdateCredentialRequest(UpdateCredentialsRequest request) throws IOException
     {
+        try
+        {
+            String username = request.GetUsername();
+            String oldPassword = request.GetOldPassword();
+            String newPassword = request.GetNewPassword();
 
+            if (!User.Exists(username))
+            {
+                _connection.Send(UpdateCredentialsRequest.NON_EXISTENT_USER);
+                return;
+            }
+
+            if (!User.IsPasswordValid(newPassword))
+            {
+                _connection.Send(UpdateCredentialsRequest.INVALID_NEWPASSWORD);
+                return;
+            }
+
+            // synchronize this block to avoid concurrent requests to check credentials correctly
+            User user = User.FromName(username);
+            synchronized (user)
+            {
+                if (!user.ArePasswordEquals(oldPassword))
+                {
+                    _connection.Send(UpdateCredentialsRequest.USERNAME_OLDPASSWORD_MISMATCH);
+                    return;
+                }
+
+                if (user.ArePasswordEquals(newPassword))
+                {
+                    _connection.Send(UpdateCredentialsRequest.NEW_AND_OLD_PASSWORD_EQUAL);
+                    return;
+                }
+
+                if (user.IsConnected())
+                {
+                    _connection.Send(UpdateCredentialsRequest.USER_LOGGED_IN);
+                    return;
+                }
+
+                user.ChangePassword(newPassword);
+            }
+
+            _connection.Send(RegisterRequest.OK);
+        }
+        catch (IOException e)
+        {
+            System.out.printf("[Error] %s\n", e.getMessage());
+            _connection.Close();
+        }
+        catch (Exception e)
+        {
+            System.out.printf("[Error] %s\n", e.getMessage());
+            _connection.Send(RegisterRequest.OTHER_ERROR_CASES);
+        }
     }
 
     private void HandleLoginRequest(Request request)

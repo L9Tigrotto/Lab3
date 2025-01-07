@@ -10,6 +10,7 @@ import java.io.*;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class User
 {
@@ -49,7 +50,7 @@ public class User
     }
 
     private final String _username;
-    private final String _password;
+    private String _password;
     private transient boolean _isConnected; // not serialized
 
     private User(String name, String password)
@@ -58,6 +59,14 @@ public class User
         _password = password;
         _isConnected = false;
     }
+
+    public boolean ArePasswordEquals(String newPassword) { return _password.equals(newPassword); }
+    public boolean IsConnected() { return _isConnected; }
+
+    public void ChangePassword(String newPassword) { _password = newPassword; }
+
+    public static boolean IsUsernameValid(String username) { return username.length() >= 3; }
+    public static boolean IsPasswordValid(String password) { return password.length() >= 3; }
 
     public static boolean Exists(String name) { return _users.containsKey(name); }
 
@@ -72,16 +81,6 @@ public class User
         User user = _users.get(name);
         if (user == null) { throw new UserNotRegisteredException(); }
         return user;
-    }
-
-    public static boolean IsConnected(String name) throws UserNotRegisteredException
-    {
-        return FromName(name)._isConnected;
-    }
-
-    public static void Connect(String name) throws UserNotRegisteredException
-    {
-        FromName(name)._isConnected = true;
     }
 
     public static void Save()

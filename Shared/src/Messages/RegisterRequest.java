@@ -15,10 +15,10 @@ import java.io.IOException;
  */
 public class RegisterRequest extends Request
 {
-    public static final SimpleResponse OK_RESPONSE = new SimpleResponse(100, "OK");
-    public static final SimpleResponse INVALID_PASSWORD_RESPONSE = new SimpleResponse(101, "Invalid Password");
-    public static final SimpleResponse USERNAME_NOT_AVAILABLE_RESPONSE = new SimpleResponse(102, "Username not available");
-    public static final SimpleResponse OTHER_ERROR_CASES_RESPONSE = new SimpleResponse(103, "Other error cases");
+    public static final SimpleResponse OK = new SimpleResponse(100, "OK");
+    public static final SimpleResponse INVALID_PASSWORD = new SimpleResponse(101, "Invalid password");
+    public static final SimpleResponse USERNAME_NOT_AVAILABLE = new SimpleResponse(102, "Username not available");
+    public static final SimpleResponse OTHER_ERROR_CASES = new SimpleResponse(103, "Other error cases");
 
     private final String _username;
     private final String _password;
@@ -38,20 +38,6 @@ public class RegisterRequest extends Request
 
     public String GetUsername() { return _username; }
     public String GetPassword() { return _password; }
-
-    /**
-     * Checks if the provided password meets the minimum length requirement.
-     *
-     * @return True if the password length is greater than or equal to 3, false otherwise.
-     */
-    public boolean IsPasswordValid() { return _password.length() >= 3; }
-
-    /**
-     * Checks if the provided username meets the minimum length requirement.
-     *
-     * @return True if the username length is greater than or equal to 3, false otherwise.
-     */
-    public boolean IsUsernameValid() { return _username.length() >= 3; }
 
     /**
      * Serializes the request content to the given JsonWriter.
