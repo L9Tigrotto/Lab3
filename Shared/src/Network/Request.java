@@ -1,6 +1,7 @@
 
 package Network;
 
+import Messages.LoginRequest;
 import Messages.RegisterRequest;
 import Messages.UpdateCredentialsRequest;
 import com.google.gson.FormattingStyle;
@@ -119,7 +120,8 @@ public abstract class Request
             {
                 case "register" -> request = RegisterRequest.DeserializeContent(jsonReader);
                 case "updateCredentials" -> request = UpdateCredentialsRequest.DeserializeContent(jsonReader);
-                default -> throw new IOException("Supposed to read a valid transmittable name from JSON (got " + temp + ")");
+                case "login" -> request = LoginRequest.DeserializeContent(jsonReader);
+                default -> throw new IOException("Supposed to read a valid request name from JSON (got " + temp + ")");
             }
 
             jsonReader.endObject(); // end of "values" object

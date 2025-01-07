@@ -1,4 +1,5 @@
 
+import Messages.LoginRequest;
 import Messages.RegisterRequest;
 import Messages.SimpleResponse;
 import Messages.UpdateCredentialsRequest;
@@ -22,9 +23,8 @@ public class RequestHandler
         return true;
     }
 
-    public static boolean SendRegister(Connection connection, String command)
+    public static boolean SendRegister(Connection connection, String[] words)
     {
-        String[] words = command.split(" ");
         if (words.length != 3)
         {
             System.out.println("Usage: register <username> <password>");
@@ -38,9 +38,8 @@ public class RequestHandler
         return SendAndWaitSimpleResponse(connection, register);
     }
 
-    public static boolean SendUpdateCredentials(Connection connection, String command)
+    public static boolean SendUpdateCredentials(Connection connection, String[] words)
     {
-        String[] words = command.split(" ");
         if (words.length != 4)
         {
             System.out.println("Usage: updateCredentials <username> <oldPassword> <newPassword>");
@@ -53,5 +52,20 @@ public class RequestHandler
         UpdateCredentialsRequest updateCredentials = new UpdateCredentialsRequest(username, oldPassword, newPassword);
 
         return SendAndWaitSimpleResponse(connection, updateCredentials);
+    }
+
+    public static boolean SendLogin(Connection connection, String[] words)
+    {
+        if (words.length != 3)
+        {
+            System.out.println("Usage: login <username> <password>");
+            return true;
+        }
+
+        String username = words[1];
+        String password = words[2];
+        LoginRequest login = new LoginRequest(username, password);
+
+        return SendAndWaitSimpleResponse(connection, login);
     }
 }

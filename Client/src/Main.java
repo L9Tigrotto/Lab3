@@ -25,12 +25,15 @@ public class Main
         boolean connected = true;
         while (true)
         {
-            String input = GetStringInput();
+            String input = GetStringInput().trim();
+            String[] words = input.split(" ");
+            String command = words[0];
 
-            if (input.equalsIgnoreCase("exit")) { break; }
-            else if (input.equalsIgnoreCase("help")) { PrintOptions(); }
-            else if (input.startsWith("register")) { connected = RequestHandler.SendRegister(connection, input); }
-            else if (input.startsWith("updateCredentials")) { connected = RequestHandler.SendUpdateCredentials(connection, input); }
+            if (command.equalsIgnoreCase("exit")) { break; }
+            else if (command.equalsIgnoreCase("help")) { PrintOptions(); }
+            else if (command.equalsIgnoreCase("register")) { connected = RequestHandler.SendRegister(connection, words); }
+            else if (command.equalsIgnoreCase("updateCredentials")) { connected = RequestHandler.SendUpdateCredentials(connection, words); }
+            else if (command.equalsIgnoreCase("login")) { connected = RequestHandler.SendLogin(connection, words); }
             else { System.out.println("Unknown command. 'help' to see options."); }
 
             if (!connected)
@@ -50,6 +53,7 @@ public class Main
         System.out.println("b) 'help' print options");
         System.out.println("1) 'register <username> <password>' to register a new user");
         System.out.println("2) 'updateCredentials <username> <oldPassword> <newPassword>' to update credentials");
+        System.out.println("3) 'login <username> <password>' to login");
     }
 
     private static String GetStringInput()

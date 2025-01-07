@@ -10,7 +10,6 @@ import java.io.*;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class User
 {
@@ -60,8 +59,11 @@ public class User
         _isConnected = false;
     }
 
-    public boolean ArePasswordEquals(String newPassword) { return _password.equals(newPassword); }
+    public boolean MatchPassword(String newPassword) { return _password.equals(newPassword); }
+
     public boolean IsConnected() { return _isConnected; }
+    public void Connect() { _isConnected = true; }
+    public void Disconnect() { _isConnected = false; }
 
     public void ChangePassword(String newPassword) { _password = newPassword; }
 
