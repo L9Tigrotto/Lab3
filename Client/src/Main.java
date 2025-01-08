@@ -22,7 +22,7 @@ public class Main
         catch (IOException e) { System.err.println(e.getMessage()); return; }
 
         PrintOptions();
-        boolean connected = true;
+        boolean isConnectionAlive = true;
         while (true)
         {
             String input = GetStringInput().trim();
@@ -31,13 +31,13 @@ public class Main
 
             if (command.equalsIgnoreCase("exit")) { break; }
             else if (command.equalsIgnoreCase("help")) { PrintOptions(); }
-            else if (command.equalsIgnoreCase("register")) { connected = RequestHandler.SendRegister(connection, words); }
-            else if (command.equalsIgnoreCase("updateCredentials")) { connected = RequestHandler.SendUpdateCredentials(connection, words); }
-            else if (command.equalsIgnoreCase("login")) { connected = RequestHandler.SendLogin(connection, words); }
-            else if (command.equalsIgnoreCase("logout")) { connected = RequestHandler.SendLogout(connection, words); }
+            else if (command.equalsIgnoreCase("register")) { isConnectionAlive = RequestHandler.SendRegister(connection, words); }
+            else if (command.equalsIgnoreCase("updateCredentials")) { isConnectionAlive = RequestHandler.SendUpdateCredentials(connection, words); }
+            else if (command.equalsIgnoreCase("login")) { isConnectionAlive = RequestHandler.SendLogin(connection, words); }
+            else if (command.equalsIgnoreCase("logout")) { isConnectionAlive = RequestHandler.SendLogout(connection, words); }
             else { System.out.println("Unknown command. 'help' to see options."); }
 
-            if (!connected)
+            if (!isConnectionAlive)
             {
                 System.out.println("[Error] Connection closed by the server");
                 break;
@@ -55,7 +55,7 @@ public class Main
         System.out.println("1) 'register <username> <password>' to register a new user");
         System.out.println("2) 'updateCredentials <username> <oldPassword> <newPassword>' to update credentials");
         System.out.println("3) 'login <username> <password>' to login");
-        System.out.println("4) 'logout' to logout");
+        System.out.println("4) 'logout' to logout <username>");
     }
 
     private static String GetStringInput()

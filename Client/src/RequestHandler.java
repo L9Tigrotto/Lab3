@@ -2,22 +2,34 @@
 import Messages.*;
 import Network.Connection;
 import Network.Request;
+import Network.Response;
 
 import java.io.IOException;
 
 public class RequestHandler
 {
-    private static boolean SendAndWaitSimpleResponse(Connection connection, Request request)
+    private static String _username = "";
+
+    private static void PrintSimpleResponse(SimpleResponse response)
+    {
+        System.out.printf("Code: %d, message: %s\n", response.GetResponse(), response.GetErrorMessage());
+    }
+
+    private static void PrintOrderResponse(SimpleResponse response)
+    {
+        System.out.printf("Code: %d, message: %s\n", response.GetResponse(), response.GetErrorMessage());
+    }
+
+    private static SimpleResponse SendAndWaitSimpleResponse(Connection connection, Request request)
     {
         try { connection.Send(request); }
-        catch (IOException e) { return false; }
+        catch (IOException e) { return null; }
 
         SimpleResponse response;
         try { response = (SimpleResponse) connection.ReceiveResponse(); }
-        catch (IOException e) { return false; }
+        catch (IOException e) { return null; }
 
-        System.out.printf("Code: %d, message: %s\n", response.GetResponse(), response.GetErrorMessage());
-        return true;
+        return response;
     }
 
     public static boolean SendRegister(Connection connection, String[] words)
@@ -32,7 +44,11 @@ public class RequestHandler
         String password = words[2];
         RegisterRequest register = new RegisterRequest(username, password);
 
-        return SendAndWaitSimpleResponse(connection, register);
+        SimpleResponse response = SendAndWaitSimpleResponse(connection, register);
+        if (response == null) { return false; }
+
+        PrintSimpleResponse(response);
+        return true;
     }
 
     public static boolean SendUpdateCredentials(Connection connection, String[] words)
@@ -47,7 +63,12 @@ public class RequestHandler
         String oldPassword = words[2];
         String newPassword = words[3];
         UpdateCredentialsRequest updateCredentials = new UpdateCredentialsRequest(username, oldPassword, newPassword);
-        return SendAndWaitSimpleResponse(connection, updateCredentials);
+
+        SimpleResponse response = SendAndWaitSimpleResponse(connection, updateCredentials);
+        if (response == null) { return false; }
+
+        PrintSimpleResponse(response);
+        return true;
     }
 
     public static boolean SendLogin(Connection connection, String[] words)
@@ -61,18 +82,38 @@ public class RequestHandler
         String username = words[1];
         String password = words[2];
         LoginRequest login = new LoginRequest(username, password);
-        return SendAndWaitSimpleResponse(connection, login);
+
+        SimpleResponse response = SendAndWaitSimpleResponse(connection, login);
+        if (response == null) { return false; }
+
+        if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _username = username; }
+        PrintSimpleResponse(response);
+        return true;
     }
 
     public static boolean SendLogout(Connection connection, String[] words)
     {
-        if (words.length != 1)
+        if (words.length != 2)
         {
-            System.out.println("Usage: logout");
+            System.out.println("Usage: logout <username>");
             return true;
         }
 
-        LogoutRequest logout = new LogoutRequest();
-        return SendAndWaitSimpleResponse(connection, logout);
+        String username = words[1];
+        if (username.equals(_username))
+        {
+            LogoutRequest logout = new LogoutRequest();
+
+            SimpleResponse response = SendAndWaitSimpleResponse(connection, logout);
+            if (response == null) { return false; }
+
+            if (response.GetResponse() == LogoutRequest.OK.GetResponse()) { _username = username; }
+            PrintSimpleResponse(response);
+            return true;
+        }
+
+        SimpleResponse response = LogoutRequest.OTHER_ERROR_CASES;
+        PrintSimpleResponse(response);
+        return true;
     }
 }
