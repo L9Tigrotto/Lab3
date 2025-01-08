@@ -34,6 +34,7 @@ public class Main
             else if (command.equalsIgnoreCase("register")) { connected = RequestHandler.SendRegister(connection, words); }
             else if (command.equalsIgnoreCase("updateCredentials")) { connected = RequestHandler.SendUpdateCredentials(connection, words); }
             else if (command.equalsIgnoreCase("login")) { connected = RequestHandler.SendLogin(connection, words); }
+            else if (command.equalsIgnoreCase("logout")) { connected = RequestHandler.SendLogout(connection, words); }
             else { System.out.println("Unknown command. 'help' to see options."); }
 
             if (!connected)
@@ -54,6 +55,7 @@ public class Main
         System.out.println("1) 'register <username> <password>' to register a new user");
         System.out.println("2) 'updateCredentials <username> <oldPassword> <newPassword>' to update credentials");
         System.out.println("3) 'login <username> <password>' to login");
+        System.out.println("4) 'logout' to logout");
     }
 
     private static String GetStringInput()

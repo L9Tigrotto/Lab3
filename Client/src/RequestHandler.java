@@ -1,8 +1,5 @@
 
-import Messages.LoginRequest;
-import Messages.RegisterRequest;
-import Messages.SimpleResponse;
-import Messages.UpdateCredentialsRequest;
+import Messages.*;
 import Network.Connection;
 import Network.Request;
 
@@ -50,7 +47,6 @@ public class RequestHandler
         String oldPassword = words[2];
         String newPassword = words[3];
         UpdateCredentialsRequest updateCredentials = new UpdateCredentialsRequest(username, oldPassword, newPassword);
-
         return SendAndWaitSimpleResponse(connection, updateCredentials);
     }
 
@@ -65,7 +61,18 @@ public class RequestHandler
         String username = words[1];
         String password = words[2];
         LoginRequest login = new LoginRequest(username, password);
-
         return SendAndWaitSimpleResponse(connection, login);
+    }
+
+    public static boolean SendLogout(Connection connection, String[] words)
+    {
+        if (words.length != 1)
+        {
+            System.out.println("Usage: logout");
+            return true;
+        }
+
+        LogoutRequest logout = new LogoutRequest();
+        return SendAndWaitSimpleResponse(connection, logout);
     }
 }

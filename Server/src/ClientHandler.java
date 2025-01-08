@@ -1,5 +1,6 @@
 
 import Messages.LoginRequest;
+import Messages.LogoutRequest;
 import Messages.UpdateCredentialsRequest;
 import Network.Request;
 import Users.DuplicateUserException;
@@ -23,6 +24,8 @@ public class ClientHandler implements Runnable
     // tracks the timestamp of the last received message from the client
     private long _lastMessageTime;
 
+    private User _user;
+
     /**
      * Constructs a new ClientHandler object for the given client socket.
      *
@@ -33,6 +36,7 @@ public class ClientHandler implements Runnable
     {
         _connection = new Connection(socket);
         _lastMessageTime = System.currentTimeMillis();
+        _user = null;
     }
 
     /**
@@ -59,7 +63,7 @@ public class ClientHandler implements Runnable
                     case "register" -> HandleRegisterRequest((RegisterRequest) request);
                     case "updateCredentials" -> HandleUpdateCredentialRequest((UpdateCredentialsRequest) request);
                     case "login" -> HandleLoginRequest((LoginRequest) request);
-                    case "logout" -> HandleLogoutRequest(request);
+                    case "logout" -> HandleLogoutRequest((LogoutRequest) request);
                     case "insertLimitOrder" -> HandleInsertLimitOrderRequest(request);
                     case "insertMarketOrder" -> HandleInsertMarketOrderRequest(request);
                     case "insertStopOrder" -> HandleInsertStopOrderRequest(request);
@@ -189,7 +193,7 @@ public class ClientHandler implements Runnable
                 user.ChangePassword(newPassword);
             }
 
-            _connection.Send(RegisterRequest.OK);
+            _connection.Send(UpdateCredentialsRequest.OK);
         }
         catch (IOException e)
         {
@@ -199,7 +203,7 @@ public class ClientHandler implements Runnable
         catch (Exception e)
         {
             System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Send(RegisterRequest.OTHER_ERROR_CASES);
+            _connection.Send(UpdateCredentialsRequest.OTHER_ERROR_CASES);
         }
     }
 
@@ -220,9 +224,10 @@ public class ClientHandler implements Runnable
                 if (user.IsConnected()) { _connection.Send(LoginRequest.USER_ALREADY_LOGGED_IN); return; }
 
                 user.Connect();
+                _user = user;
             }
 
-            _connection.Send(RegisterRequest.OK);
+            _connection.Send(LoginRequest.OK);
         }
         catch (IOException e)
         {
@@ -232,13 +237,36 @@ public class ClientHandler implements Runnable
         catch (Exception e)
         {
             System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Send(RegisterRequest.OTHER_ERROR_CASES);
+            _connection.Send(LoginRequest.OTHER_ERROR_CASES);
         }
     }
 
-    private void HandleLogoutRequest(Request request) throws IOException
+    private void HandleLogoutRequest(LogoutRequest request) throws IOException
     {
+        try
+        {
+            if (_user == null) { _connection.Send(LogoutRequest.USER_NOT_LOGGED); return; }
 
+            // synchronize this block to avoid concurrent requests to check credentials correctly
+            // noinspection SynchronizeOnNonFinalField (this class is runned on a single thread)
+            synchronized (_user)
+            {
+                _user.Disconnect();
+                _user = null;
+            }
+
+            _connection.Send(LogoutRequest.OK);
+        }
+        catch (IOException e)
+        {
+            System.out.printf("[Error] %s\n", e.getMessage());
+            _connection.Close();
+        }
+        catch (Exception e)
+        {
+            System.out.printf("[Error] %s\n", e.getMessage());
+            _connection.Send(LogoutRequest.OTHER_ERROR_CASES);
+        }
     }
 
     private void HandleInsertLimitOrderRequest(Request request) throws IOException

@@ -2,6 +2,7 @@
 package Network;
 
 import Messages.LoginRequest;
+import Messages.LogoutRequest;
 import Messages.RegisterRequest;
 import Messages.UpdateCredentialsRequest;
 import com.google.gson.FormattingStyle;
@@ -121,6 +122,7 @@ public abstract class Request
                 case "register" -> request = RegisterRequest.DeserializeContent(jsonReader);
                 case "updateCredentials" -> request = UpdateCredentialsRequest.DeserializeContent(jsonReader);
                 case "login" -> request = LoginRequest.DeserializeContent(jsonReader);
+                case "logout" -> request = LogoutRequest.DeserializeContent(jsonReader);
                 default -> throw new IOException("Supposed to read a valid request name from JSON (got " + temp + ")");
             }
 
