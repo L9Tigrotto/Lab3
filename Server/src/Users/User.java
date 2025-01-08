@@ -1,6 +1,8 @@
 
 package Users;
 
+import Messages.*;
+import Network.Response;
 import com.google.gson.FormattingStyle;
 import com.google.gson.JsonIOException;
 import com.google.gson.stream.JsonReader;
@@ -62,21 +64,74 @@ public class User
     public boolean MatchPassword(String newPassword) { return _password.equals(newPassword); }
 
     public boolean IsConnected() { return _isConnected; }
-    public void Connect() { _isConnected = true; }
-    public void Disconnect() { _isConnected = false; }
 
-    public void ChangePassword(String newPassword) { _password = newPassword; }
+    public static SimpleResponse TryRegister(String username, String password)
+    {
+        // attempt to insert the new user into the collection. Handle the case where the username is already taken,
+        // even though the initial check might have missed it. This could happen due to race conditions
+        User user = new User(username, password);
+        if (_users.putIfAbsent(username, user) != null) { return RegisterRequest.USERNAME_NOT_AVAILABLE; }
+
+        // if all checks pass and the user is successfully inserted, send an OK response
+        return RegisterRequest.OK;
+    }
+
+    public SimpleResponse TryUpdatePassword(String oldPassword, String newPassword)
+    {
+        // synchronize this block to prevent race conditions when multiple requests attempt to modify the
+        // same user concurrently
+        synchronized (this)
+        {
+            // verify that the provided old password matches the user's current password
+            if (!MatchPassword(oldPassword)) { return UpdateCredentialsRequest.USERNAME_OLDPASSWORD_MISMATCH; }
+
+            // prevent the user from setting the new password to the same as the old password
+            if (MatchPassword(newPassword)) { return UpdateCredentialsRequest.NEW_AND_OLD_PASSWORD_EQUAL; }
+
+            // specifically checks if the target user is connected to another session, not just whether any user is
+            // connected to this particular ClientHandler instance
+            if (_isConnected) { return UpdateCredentialsRequest.USER_LOGGED_IN; }
+
+            // update the user's password with the new password
+            _password = newPassword;
+        }
+
+        return UpdateCredentialsRequest.OK;
+    }
+
+    public SimpleResponse TryLogIn(String password)
+    {
+        synchronized (this)
+        {
+            // verify that the provided password matches the user's stored password
+            if (!MatchPassword(password)) { return LoginRequest.USERNAME_PASSWORD_MISMATCH; }
+
+            // check if the user is already logged in from another session
+            if (_isConnected) { return LoginRequest.USER_ALREADY_LOGGED_IN; }
+
+            // mark the user as connected
+            _isConnected = true;
+        }
+
+        return LoginRequest.OK;
+    }
+
+    public SimpleResponse TryLogout()
+    {
+        synchronized (this)
+        {
+            // check if the user is already logged out and set the connected flag to false
+            if (!_isConnected) { return LogoutRequest.USER_NOT_LOGGED; }
+            _isConnected = false;
+        }
+
+        return LogoutRequest.OK;
+    }
 
     public static boolean IsUsernameValid(String username) { return username.length() >= 3; }
     public static boolean IsPasswordValid(String password) { return password.length() >= 3; }
 
     public static boolean Exists(String name) { return _users.containsKey(name); }
-
-    public static synchronized void Insert(String username, String password) throws DuplicateUserException
-    {
-        User user = new User(username, password);
-        if (_users.putIfAbsent(username, user) != null) { throw new DuplicateUserException(""); }
-    }
 
     public static User FromName(String name) throws UserNotRegisteredException
     {

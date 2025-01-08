@@ -1,14 +1,10 @@
 
-import Messages.LoginRequest;
-import Messages.LogoutRequest;
-import Messages.UpdateCredentialsRequest;
+import Messages.*;
 import Network.Request;
-import Users.DuplicateUserException;
 import Users.User;
-import Messages.RegisterRequest;
 import Network.Connection;
+import Users.UserNotRegisteredException;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -49,9 +45,9 @@ public class ClientHandler implements Runnable
     {
         while (true)
         {
-            // wait for a request from the client, handle disconnection or server shutdown during the wait
+            // wait for a request from the client, handle disconnection due inactivity or server shutdown during the wait
             WaitForRequest();
-            if (GlobalData.LISTENER.IsStopRequested()) { return; }
+            if (_connection.IsClosed() || GlobalData.LISTENER.IsStopRequested()) { return; }
 
             try
             {
@@ -80,25 +76,9 @@ public class ClientHandler implements Runnable
                 // update the last message time to track client activity
                 _lastMessageTime = System.currentTimeMillis();
             }
-            catch (EOFException e)
+            catch (IOException e)
             {
-                System.out.println("[Warning] Socket closed");
-                try { _connection.Close(); }
-                catch (IOException ioe)
-                {
-                    System.out.println("[Error] Generic error");
-                    System.err.println(ioe.getMessage());
-                }
-                return;
-            }
-            catch (Exception e) {
-                System.err.println(e.getMessage());
-                try { _connection.Close(); }
-                catch (IOException ioe)
-                {
-                    System.out.println("[Error] Generic error");
-                    System.err.println(ioe.getMessage());
-                }
+                System.out.println("[Error] Unable to close connection, interrupting communications with client");
                 return;
             }
         }
@@ -127,16 +107,7 @@ public class ClientHandler implements Runnable
                     System.out.println("[Warning] Inactive client detected, closing connection");
 
                     // if a user is associated with this connection, mark them as disconnected.
-                    if (_user != null)
-                    {
-                        // synchronize access to the user object to prevent race conditions when multiple
-                        // requests attempt to modify the same user concurrently.
-                        // Note: This synchronization is necessary even if the ClientHandler class is designed
-                        // to be run on a single thread, as other parts of the system might interact with the
-                        // User object concurrently.
-                        // noinspection SynchronizeOnNonFinalField
-                        synchronized (_user) { _user.Disconnect(); }
-                    }
+                    if (_user != null) { _user.TryLogout(); }
 
                     _connection.Close();
                     return;
@@ -158,38 +129,28 @@ public class ClientHandler implements Runnable
      * and sends an appropriate response to the client based on the outcome of the registration process.
      *
      * @param register The registration request received from the client.
-     * @throws IOException If an I/O error occurs while sending the response to the client.
+     * @throws IOException If an I/O error occurs while closing the connection due to an error.
      */
     private void HandleRegisterRequest(RegisterRequest register) throws IOException
     {
         String username = register.GetUsername();
         String password = register.GetPassword();
+        SimpleResponse response;
 
-        try
-        {
-            // check if the username is valid (meets length requirements, etc.) and if it is already taken by another user
-            if (!User.IsUsernameValid(username) || User.Exists(username)) { _connection.Send(RegisterRequest.USERNAME_NOT_AVAILABLE); return; }
+        // check if the username is valid (meets length requirements, etc.) and if it is already taken by another user
+        if (!User.IsUsernameValid(username) || User.Exists(username)) { response = RegisterRequest.USERNAME_NOT_AVAILABLE; }
 
-            // check if the provided password meets the minimum length and complexity requirements
-            if (!User.IsPasswordValid(password)) { _connection.Send(RegisterRequest.INVALID_PASSWORD); return; }
+        // check if the provided password meets the minimum length and complexity requirements
+        else if (!User.IsPasswordValid(password)) { response = RegisterRequest.INVALID_PASSWORD; }
 
-            // attempt to insert the new user into the database. Handle the case where the username is already taken,
-            // even though the initial check might have missed it. This could happen due to race conditions
-            try { User.Insert(username, password); }
-            catch (DuplicateUserException e) { _connection.Send(RegisterRequest.USERNAME_NOT_AVAILABLE); return; }
+        // attempt to register the user and get the response
+        else { response = User.TryRegister(username, password); }
 
-            // if all checks pass and the user is successfully inserted, send an OK response
-            _connection.Send(RegisterRequest.OK);
-        }
+        try { _connection.Send(response); }
         catch (IOException e)
         {
             System.out.printf("[Error] %s\n", e.getMessage());
             _connection.Close();
-        }
-        catch (Exception e)
-        {
-            System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Send(RegisterRequest.OTHER_ERROR_CASES);
         }
     }
 
@@ -200,57 +161,39 @@ public class ClientHandler implements Runnable
      * if valid, and sends an appropriate response to the client.
      *
      * @param request The UpdateCredentialsRequest received from the client.
-     * @throws IOException If an I/O error occurs during communication with the client.
+     * @throws IOException If an I/O error occurs while closing the connection due to an error.
      */
     private void HandleUpdateCredentialRequest(UpdateCredentialsRequest request) throws IOException
     {
         String username = request.GetUsername();
         String oldPassword = request.GetOldPassword();
         String newPassword = request.GetNewPassword();
+        SimpleResponse response;
 
-        try
+        // check if the user is already logged in on this connection
+        if (_user != null) { response = UpdateCredentialsRequest.USER_LOGGED_IN; }
+
+        // check if the new password meets the minimum length and complexity requirements
+        else if (!User.IsPasswordValid(newPassword)) { response = UpdateCredentialsRequest.INVALID_NEWPASSWORD; }
+
+        // check if the specified username exists in the system
+        else if (!User.Exists(username)) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
+
+        // attempt to update the user's password
+        else
         {
-            // check if the new password meets the minimum length and complexity requirements
-            if (!User.IsPasswordValid(newPassword)) { _connection.Send(UpdateCredentialsRequest.INVALID_NEWPASSWORD); return; }
-
-            // it checks if a user is already logged in on this specific client connection, not whether there
-            // are any connected users in general
-            if (_user != null) { _connection.Send(UpdateCredentialsRequest.USER_LOGGED_IN); return; }
-
-            // check if the specified username exists in the system
-            if (!User.Exists(username)) { _connection.Send(UpdateCredentialsRequest.NON_EXISTENT_USER); return; }
-
-            // Synchronize access to the user object to prevent race conditions when multiple requests attempt to modify
-            // the same user concurrently
-            User user = User.FromName(username);
-            synchronized (user)
+            try
             {
-                // verify that the provided old password matches the user's current password
-                if (!user.MatchPassword(oldPassword)) { _connection.Send(UpdateCredentialsRequest.USERNAME_OLDPASSWORD_MISMATCH); return; }
-
-                // prevent the user from setting the new password to the same as the old password
-                if (user.MatchPassword(newPassword)) { _connection.Send(UpdateCredentialsRequest.NEW_AND_OLD_PASSWORD_EQUAL); return; }
-
-                // specifically checks if the target user is connected to another session, not just whether any user is
-                // connected to this particular ClientHandler instance
-                if (user.IsConnected()) { _connection.Send(UpdateCredentialsRequest.USER_LOGGED_IN); return; }
-
-                // update the user's password with the new password
-                user.ChangePassword(newPassword);
-            }
-
-            // send an OK response to the client, indicating successful password update
-            _connection.Send(UpdateCredentialsRequest.OK);
+                User user = User.FromName(username);
+                response = user.TryUpdatePassword(oldPassword, newPassword);
+            } catch (UserNotRegisteredException e) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
         }
+
+        try { _connection.Send(response); }
         catch (IOException e)
         {
             System.out.printf("[Error] %s\n", e.getMessage());
             _connection.Close();
-        }
-        catch (Exception e)
-        {
-            System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Send(UpdateCredentialsRequest.OTHER_ERROR_CASES);
         }
     }
 
@@ -261,46 +204,39 @@ public class ClientHandler implements Runnable
      * and sends an appropriate response to the client.
      *
      * @param request The LoginRequest received from the client.
-     * @throws IOException If an I/O error occurs during communication with the client.
+     * @throws IOException If an I/O error occurs while closing the connection due to an error.
      */
     private void HandleLoginRequest(LoginRequest request) throws IOException
     {
         String username = request.GetUsername();
         String password = request.GetPassword();
+        SimpleResponse response;
 
-        try
+        // check if the user is already logged in on this connection
+        if (_user != null) { response = LoginRequest.USER_ALREADY_LOGGED_IN; }
+
+        // check if the specified username exists in the system
+        else if (!User.Exists(username)) { response = LoginRequest.NON_EXISTENT_USER; }
+
+        // attempt to log the user in
+        else
         {
-            // checks if the provided username exists
-            if (!User.Exists(username))  { _connection.Send(LoginRequest.NON_EXISTENT_USER); return; }
-
-            // synchronize this block to prevent race conditions when multiple requests attempt to modify the
-            // same user concurrently
-            User user = User.FromName(username);
-            synchronized (user)
+            try
             {
-                // verify that the provided password matches the user's stored password
-                if (!user.MatchPassword(password)) { _connection.Send(LoginRequest.USERNAME_PASSWORD_MISMATCH); return; }
+                User user = User.FromName(username);
+                response = user.TryLogIn(password);
 
-                // check if the user is already logged in from another session
-                if (user.IsConnected()) { _connection.Send(LoginRequest.USER_ALREADY_LOGGED_IN); return; }
-
-                // mark the user as connected and associate the user object with this client handler
-                user.Connect();
-                _user = user;
-            }
-
-            // send an OK response to the client, indicating successful login
-            _connection.Send(LoginRequest.OK);
+                // associate the user object with this client handler if login is successful
+                if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = user; }
+            } catch (UserNotRegisteredException e) { response = LoginRequest.NON_EXISTENT_USER; }
         }
+
+
+        try { _connection.Send(response); }
         catch (IOException e)
         {
             System.out.printf("[Error] %s\n", e.getMessage());
             _connection.Close();
-        }
-        catch (Exception e)
-        {
-            System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Send(LoginRequest.OTHER_ERROR_CASES);
         }
     }
 
@@ -310,38 +246,28 @@ public class ClientHandler implements Runnable
      * This method marks the user as disconnected and sends an appropriate response to the client.
      *
      * @param request The LogoutRequest received from the client.
-     * @throws IOException If an I/O error occurs during communication with the client.
+     * @throws IOException If an I/O error occurs while closing the connection due to an error.
      */
     private void HandleLogoutRequest(LogoutRequest request) throws IOException
     {
-        try
+        SimpleResponse response;
+
+        // check if the user is currently logged in
+        if (_user == null) { response = LogoutRequest.USER_NOT_LOGGED; }
+
+        else
         {
-            // check if the user is currently logged in
-            if (_user == null) { _connection.Send(LogoutRequest.USER_NOT_LOGGED); return; }
+            response = _user.TryLogout();
 
-            // synchronize access to the user object to prevent race conditions when multiple requests attempt
-            // to modify the same user concurrently.
-            // Note: This synchronization is necessary even if the ClientHandler class is designed to be run
-            // on a single thread, as other parts of the system might interact with the User object concurrently.
-            // noinspection SynchronizeOnNonFinalField
-            synchronized (_user)
-            {
-                // mark the user as disconnected and disassociate the user object from this client handler
-                _user.Disconnect();
-                _user = null;
-            }
-
-            _connection.Send(LogoutRequest.OK);
+            // clear the user reference if logout was successful
+            if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = null; }
         }
+
+        try { _connection.Send(response); }
         catch (IOException e)
         {
             System.out.printf("[Error] %s\n", e.getMessage());
             _connection.Close();
-        }
-        catch (Exception e)
-        {
-            System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Send(LogoutRequest.OTHER_ERROR_CASES);
         }
     }
 

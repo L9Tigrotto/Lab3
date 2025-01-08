@@ -35,6 +35,13 @@ public class Connection
     }
 
     /**
+     * Checks if the underlying socket connection is closed.
+     *
+     * @return True if the socket is closed, false otherwise.
+     */
+    public boolean IsClosed() { return _socket.isClosed(); }
+
+    /**
      * Checks if there is data available to be read from the socket.
      *
      * @return True if there is data available, false otherwise.
