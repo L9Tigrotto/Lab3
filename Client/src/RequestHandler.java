@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public class RequestHandler
 {
-    private static String _username = "";
+    private static String _username = null;
 
     private static void PrintSimpleResponse(SimpleResponse response)
     {
@@ -20,18 +20,25 @@ public class RequestHandler
         System.out.printf("Code: %d, message: %s\n", response.GetResponse(), response.GetErrorMessage());
     }
 
-    private static SimpleResponse SendAndWaitSimpleResponse(Connection connection, Request request)
+    private static Response SendAndWaitResponse(Connection connection, Request request)
     {
         try { connection.Send(request); }
         catch (IOException e) { return null; }
 
-        SimpleResponse response;
-        try { response = (SimpleResponse) connection.ReceiveResponse(); }
+        Response response;
+        try { response = connection.ReceiveResponse(); }
         catch (IOException e) { return null; }
 
         return response;
     }
 
+    /**
+     * Handles a registration request from the user.
+     *
+     * @param connection The connection to the server.
+     * @param words An array of strings containing the command and arguments.
+     * @return True the connection is still alive, false otherwise.
+     */
     public static boolean SendRegister(Connection connection, String[] words)
     {
         if (words.length != 3)
@@ -44,13 +51,20 @@ public class RequestHandler
         String password = words[2];
         RegisterRequest register = new RegisterRequest(username, password);
 
-        SimpleResponse response = SendAndWaitSimpleResponse(connection, register);
+        SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, register);
         if (response == null) { return false; }
 
         PrintSimpleResponse(response);
         return true;
     }
 
+    /**
+     * Handles an update credentials request from the user.
+     *
+     * @param connection The connection to the server.
+     * @param words An array of strings containing the command and arguments.
+     * @return True the connection is still alive, false otherwise.
+     */
     public static boolean SendUpdateCredentials(Connection connection, String[] words)
     {
         if (words.length != 4)
@@ -64,13 +78,20 @@ public class RequestHandler
         String newPassword = words[3];
         UpdateCredentialsRequest updateCredentials = new UpdateCredentialsRequest(username, oldPassword, newPassword);
 
-        SimpleResponse response = SendAndWaitSimpleResponse(connection, updateCredentials);
+        SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, updateCredentials);
         if (response == null) { return false; }
 
         PrintSimpleResponse(response);
         return true;
     }
 
+    /**
+     * Handles a login request from the user.
+     *
+     * @param connection The connection to the server.
+     * @param words An array of strings containing the command and arguments.
+     * @return True the connection is still alive, false otherwise.
+     */
     public static boolean SendLogin(Connection connection, String[] words)
     {
         if (words.length != 3)
@@ -83,14 +104,22 @@ public class RequestHandler
         String password = words[2];
         LoginRequest login = new LoginRequest(username, password);
 
-        SimpleResponse response = SendAndWaitSimpleResponse(connection, login);
+        SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, login);
         if (response == null) { return false; }
 
+        // update the username if login is successful
         if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _username = username; }
         PrintSimpleResponse(response);
         return true;
     }
 
+    /**
+     * Handles a logout request from the user.
+     *
+     * @param connection The connection to the server.
+     * @param words An array of strings containing the command and arguments.
+     * @return True the connection is still alive, false otherwise.
+     */
     public static boolean SendLogout(Connection connection, String[] words)
     {
         if (words.length != 2)
@@ -100,19 +129,20 @@ public class RequestHandler
         }
 
         String username = words[1];
-        if (username.equals(_username))
+
+        // check if the user is actually logged in
+        if (!username.equals(_username))
         {
-            LogoutRequest logout = new LogoutRequest();
-
-            SimpleResponse response = SendAndWaitSimpleResponse(connection, logout);
-            if (response == null) { return false; }
-
-            if (response.GetResponse() == LogoutRequest.OK.GetResponse()) { _username = username; }
+            SimpleResponse response = LogoutRequest.OTHER_ERROR_CASES;
             PrintSimpleResponse(response);
             return true;
         }
 
-        SimpleResponse response = LogoutRequest.OTHER_ERROR_CASES;
+        LogoutRequest logout = new LogoutRequest();
+        SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, logout);
+        if (response == null) { return false; }
+
+        if (response.GetResponse() == LogoutRequest.OK.GetResponse()) { _username = null; }
         PrintSimpleResponse(response);
         return true;
     }
