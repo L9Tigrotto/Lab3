@@ -1,8 +1,6 @@
+package Networking;
 
 import Messages.*;
-import Network.Connection;
-import Network.Request;
-import Network.Response;
 
 import java.io.IOException;
 

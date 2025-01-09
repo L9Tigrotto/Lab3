@@ -1,5 +1,5 @@
 
-package DataStructures;
+package Orders;
 
 public class StopOrder
 {

@@ -1,4 +1,4 @@
-package Network;
+package Networking;
 
 import Messages.SimpleResponse;
 import com.google.gson.FormattingStyle;

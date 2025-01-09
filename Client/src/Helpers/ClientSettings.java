@@ -1,5 +1,4 @@
-
-import DataStructures.Settings;
+package Helpers;
 
 import java.io.IOException;
 

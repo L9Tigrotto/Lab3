@@ -1,8 +1,8 @@
+package Networking;
 
+import Helpers.GlobalData;
 import Messages.*;
-import Network.Request;
 import Users.User;
-import Network.Connection;
 import Users.UserNotRegisteredException;
 
 import java.io.IOException;
@@ -24,7 +24,7 @@ public class ClientHandler implements Runnable
     private User _user;
 
     /**
-     * Constructs a new ClientHandler object for the given client socket.
+     * Constructs a new Networking.ClientHandler object for the given client socket.
      *
      * @param socket The socket representing the connected client.
      * @throws IOException If an I/O error occurs during connection setup.
@@ -138,13 +138,13 @@ public class ClientHandler implements Runnable
         SimpleResponse response;
 
         // check if the username is valid (meets length requirements, etc.) and if it is already taken by another user
-        if (!User.IsUsernameValid(username) || User.Exists(username)) { response = RegisterRequest.USERNAME_NOT_AVAILABLE; }
+        if (!User.IsUsernameValid(username) || GlobalData.UserExists(username)) { response = RegisterRequest.USERNAME_NOT_AVAILABLE; }
 
         // check if the provided password meets the minimum length and complexity requirements
         else if (!User.IsPasswordValid(password)) { response = RegisterRequest.INVALID_PASSWORD; }
 
         // attempt to register the user and get the response
-        else { response = User.TryRegister(username, password); }
+        else { response = GlobalData.TryRegisterUser(username, password); }
 
         try { _connection.Send(response); }
         catch (IOException e)
@@ -177,14 +177,14 @@ public class ClientHandler implements Runnable
         else if (!User.IsPasswordValid(newPassword)) { response = UpdateCredentialsRequest.INVALID_NEWPASSWORD; }
 
         // check if the specified username exists in the system
-        else if (!User.Exists(username)) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
+        else if (!GlobalData.UserExists(username)) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
 
         // attempt to update the user's password
         else
         {
             try
             {
-                User user = User.FromName(username);
+                User user = GlobalData.UserFromName(username);
                 response = user.TryUpdatePassword(oldPassword, newPassword);
             } catch (UserNotRegisteredException e) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
         }
@@ -216,14 +216,14 @@ public class ClientHandler implements Runnable
         if (_user != null) { response = LoginRequest.USER_ALREADY_LOGGED_IN; }
 
         // check if the specified username exists in the system
-        else if (!User.Exists(username)) { response = LoginRequest.NON_EXISTENT_USER; }
+        else if (!GlobalData.UserExists(username)) { response = LoginRequest.NON_EXISTENT_USER; }
 
         // attempt to log the user in
         else
         {
             try
             {
-                User user = User.FromName(username);
+                User user = GlobalData.UserFromName(username);
                 response = user.TryLogIn(password);
 
                 // associate the user object with this client handler if login is successful

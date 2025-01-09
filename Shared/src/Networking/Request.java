@@ -1,5 +1,5 @@
 
-package Network;
+package Networking;
 
 import Messages.LoginRequest;
 import Messages.LogoutRequest;

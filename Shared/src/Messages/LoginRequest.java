@@ -1,7 +1,7 @@
 
 package Messages;
 
-import Network.Request;
+import Networking.Request;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 

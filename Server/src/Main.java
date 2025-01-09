@@ -1,5 +1,5 @@
 
-import Users.User;
+import Helpers.GlobalData;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -17,7 +17,7 @@ public class Main
         }
 
         GlobalData.LISTENER.Stop();
-        User.Save();
+        GlobalData.Save();
     }
 
 
