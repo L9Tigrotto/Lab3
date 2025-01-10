@@ -30,7 +30,7 @@ public class Listener
     {
         if (_isRunning.compareAndExchange(false, true))
         {
-            System.out.println("[Warning] Server is already running");
+            System.out.printf("[WARNING] Already listening on port %d\n", GlobalData.SETTINGS.TCP_PORT);
             return;
         }
 
@@ -41,19 +41,19 @@ public class Listener
     {
         if (!_isRunning.compareAndExchange(true, false))
         {
-            System.out.println("[Warning] Server is not running.");
+            System.out.printf("[WARNING] Not listening on port %d\n", GlobalData.SETTINGS.TCP_PORT);
             return;
         }
 
-        System.out.println("[INFO] Waiting for server to stop...");
+        System.out.println("[INFO] Waiting for listener to close...");
         _isStopRequested.set(true);
         try { _thread.join(); }
-        catch (InterruptedException e) { throw new RuntimeException(e); }
+        catch (InterruptedException e) { System.out.printf("[ERROR] Unable to join the listener thread: %s\n", e.getMessage()); }
     }
 
     private void Listen()
     {
-        System.out.printf("[INFO] Listening on port %d. Type 'stop' to close the server\n", GlobalData.SETTINGS.TCP_PORT);
+        System.out.printf("[INFO] Listening on port %d\n", GlobalData.SETTINGS.TCP_PORT);
 
         BlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<Runnable>(GlobalData.SETTINGS.MaxConcurrentClients);
         try (ExecutorService threadPool = new ThreadPoolExecutor(0, GlobalData.SETTINGS.MaxConcurrentClients,
@@ -77,11 +77,7 @@ public class Listener
 
             threadPool.shutdown();
             try { boolean closed = threadPool.awaitTermination(5, TimeUnit.MINUTES); }
-            catch (InterruptedException e) { throw new RuntimeException(e); }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        System.out.printf("[INFO] Stopped listening on port %d.\n", GlobalData.SETTINGS.TCP_PORT);
+            catch (InterruptedException e) { System.out.printf("[ERROR] Unable to terminate thread pool correctly: %s\n", e.getMessage()); }
+        } catch (IOException e) { System.out.printf("[ERROR] I/O exception: %s\n", e.getMessage()); }
     }
 }

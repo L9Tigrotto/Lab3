@@ -14,9 +14,19 @@ public class GlobalData
     // the client settings object, loaded from the configuration file
     public static final ClientSettings SETTINGS;
 
+    // static initializer block to load client settings at startup
     static
     {
         try { SETTINGS = new ClientSettings(CONFIG_FILENAME); }
         catch (IOException e) { throw new RuntimeException(e); }
+    }
+
+    /**
+     * Saves client settings to the configuration file.
+     */
+    public static void Save()
+    {
+        try { SETTINGS.Save();}
+        catch (IOException e) { System.out.printf("[ERROR] Unable to save settings to file: %s\n", e.getMessage()); }
     }
 }

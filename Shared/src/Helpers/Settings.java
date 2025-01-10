@@ -1,22 +1,26 @@
 
 package Helpers;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
 
 /**
  * This class represents a base class for loading settings from a configuration file.
  * Subclasses can extend this class and override the Load method to handle specific settings.
  */
-public class Settings
+public abstract class Settings
 {
     // TCP/IP address of the server
     public String TCP_IP;
 
     // TCP port of the server
     public int TCP_PORT;
+
+     // the filename of the configuration file
+    private final String _filename;
+
+    // the loaded properties from the configuration file
+    private final Properties _properties;
 
     /**
      * Constructor that takes the configuration filename as input.
@@ -26,14 +30,15 @@ public class Settings
      */
     public Settings(String filename) throws IOException
     {
+        _filename = filename;
         File configFile = new File(filename);
         try (FileReader reader = new FileReader(configFile))
         {
-            Properties properties = new Properties();
-            properties.load(reader);
+            _properties = new Properties();
+            _properties.load(reader);
 
             // call the Load method to parse and store the settings
-            Load(properties);
+            Load(_properties);
         }
     }
 
@@ -47,5 +52,16 @@ public class Settings
     {
         TCP_IP = properties.getProperty("TCP_IP");
         TCP_PORT = Integer.parseInt(properties.getProperty("TCP_PORT"));
+    }
+
+    /**
+     * Saves the current server configuration settings to the configuration file.
+     *
+     * @throws IOException If an error occurs while saving the configuration file.
+     */
+    public void Save() throws IOException
+    {
+        File configFile = new File(_filename);
+        try (FileWriter writer = new FileWriter(configFile)) { _properties.store(writer, ""); }
     }
 }

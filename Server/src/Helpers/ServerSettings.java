@@ -20,6 +20,9 @@ public class ServerSettings extends Settings
     // time in milliseconds to determinate if client is active or inactive
     public int ClientInactiveThresholdMS;
 
+    // next available order ID
+    public long NextOrderID;
+
     /**
      * Constructor that takes the configuration filename as input.
      * @param filename The name of the configuration file.
@@ -43,5 +46,6 @@ public class ServerSettings extends Settings
         AcceptClientTimeoutMS = Integer.parseInt(properties.getProperty("AcceptClientTimeoutMS"));
         WaitDataTimeoutMS = Integer.parseInt(properties.getProperty("WaitDataTimeoutMS"));
         ClientInactiveThresholdMS = Integer.parseInt(properties.getProperty("ClientInactiveThresholdMS"));
+        NextOrderID = Integer.parseInt(properties.getProperty("NextOrderID"));
     }
 }

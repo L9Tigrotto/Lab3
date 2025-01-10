@@ -18,7 +18,7 @@ public class RequestHandler
      */
     private static void PrintSimpleResponse(SimpleResponse response)
     {
-        System.out.printf("Code: %d, message: %s\n", response.GetResponse(), response.GetErrorMessage());
+        System.out.printf("[INFO] Response received.\n\t-> Code: %d\n\t-> Message: %s\n", response.GetResponse(), response.GetErrorMessage());
     }
 
     /**
@@ -28,7 +28,7 @@ public class RequestHandler
      */
     private static void PrintOrderResponse(OrderResponse response)
     {
-        System.out.printf("OrderID: %d", response.GetOrderID());
+        System.out.printf("[INFO] Response received.\n\t-> OrderID: %d", response.GetOrderID());
     }
 
     /**
@@ -229,11 +229,7 @@ public class RequestHandler
         long size;
 
         try { size = Long.parseLong(words[2]); }
-        catch (NumberFormatException e)
-        {
-            System.out.println("[ERROR] <size> is not a number");
-            return true;
-        }
+        catch (NumberFormatException e) { System.out.println("[ERROR] <size> is not a number"); return true; }
 
         // TODO
         return true;
@@ -274,11 +270,7 @@ public class RequestHandler
         long size, limit;
 
         try { size = Long.parseLong(words[2]); }
-        catch (NumberFormatException e)
-        {
-            System.out.println("[ERROR] <size> is not a number");
-            return true;
-        }
+        catch (NumberFormatException e) { System.out.println("[ERROR] <size> is not a number"); return true; }
 
         try { limit = Long.parseLong(words[3]); }
         catch (NumberFormatException e)
@@ -326,18 +318,10 @@ public class RequestHandler
         long size, stopPrice;
 
         try { size = Long.parseLong(words[2]); }
-        catch (NumberFormatException e)
-        {
-            System.out.println("[ERROR] <size> is not a number");
-            return true;
-        }
+        catch (NumberFormatException e) { System.out.println("[ERROR] <size> is not a number"); return true; }
 
         try { stopPrice = Long.parseLong(words[3]); }
-        catch (NumberFormatException e)
-        {
-            System.out.println("[ERROR] <stopPrice> is not a number");
-            return true;
-        }
+        catch (NumberFormatException e) { System.out.println("[ERROR] <stopPrice> is not a number"); return true; }
 
         // TODO
         return true;
@@ -370,11 +354,7 @@ public class RequestHandler
         long orderID;
 
         try { orderID = Long.parseLong(words[1]); }
-        catch (NumberFormatException e)
-        {
-            System.out.println("[ERROR] <size> is not a number");
-            return true;
-        }
+        catch (NumberFormatException e) { System.out.println("[ERROR] <size> is not a number"); return true; }
 
         // TODO
         return true;

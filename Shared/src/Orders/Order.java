@@ -5,28 +5,24 @@ import Users.User;
 
 public class Order
 {
-    private static int NextID = 0;
-
-    static
-    {
-
-    }
-
-
     private final long _id;
+    private final long _size;
     private final long _price;
-    private long _size;
-    private long _time;
+    private final long _time;
     private final User _user;
 
-    public Order(long price, long size)
+    public Order(long id, long size, long price, long time, User user)
     {
-        _id = NextID++;
-        _price = price;
+        _id = id;
         _size = size;
-        _user = null;
+        _price = price;
+        _time = time;
+        _user = user;
     }
 
+    public long GetID() { return _id; }
+    public long GetSize() { return _size; }
     public long GetPrice() { return _price; }
-    public long GetTimestamp() { return _time; }
+    public long GetTime() { return _time; }
+    public User GetUser() { return _user; }
 }

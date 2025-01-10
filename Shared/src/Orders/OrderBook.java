@@ -16,7 +16,7 @@ public class OrderBook
     private static final PriorityQueue<Order> _askOrders
             = new PriorityQueue<Order>((orderA, orderB) -> {
                 int cmp = Long.compare(orderA.GetPrice(), orderB.GetPrice());
-                if (cmp == 0) { cmp = Long.compare(orderA.GetTimestamp(), orderB.GetTimestamp()); }
+                if (cmp == 0) { cmp = Long.compare(orderA.GetTime(), orderB.GetTime()); }
                 return cmp;
             });
 
@@ -29,7 +29,7 @@ public class OrderBook
     private static final PriorityQueue<Order> _bidOrders
             = new PriorityQueue<Order>((orderA, orderB) -> {
                 int cmp = -Long.compare(orderA.GetPrice(), orderB.GetPrice());
-                if (cmp == 0) { cmp = Long.compare(orderA.GetTimestamp(), orderB.GetTimestamp()); }
+                if (cmp == 0) { cmp = Long.compare(orderA.GetTime(), orderB.GetTime()); }
                 return cmp;
             });
 

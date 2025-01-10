@@ -1,8 +1,11 @@
+
 package Helpers;
 
 import Messages.RegisterRequest;
 import Messages.SimpleResponse;
 import Networking.Listener;
+import Orders.MarketOrder;
+import Orders.Order;
 import Users.User;
 import Users.UserNotRegisteredException;
 import com.google.gson.FormattingStyle;
@@ -19,7 +22,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This class holds global data and settings for the server application.
+ * This class provides global access to shared data and functionality within the server application.
+ * It manages server settings, registered users, and the server listener.
  */
 public class GlobalData
 {
@@ -28,18 +32,19 @@ public class GlobalData
     private static final String USERS_FILENAME= "users.json";
 
     // the server settings object, loaded from the configuration file
-    public static final ServerSettings SETTINGS;
+    public static ServerSettings SETTINGS;
 
     // the listener object for handling incoming connections
     public static final Listener LISTENER;
 
+    // a concurrent hash map to store registered users (username as key, User object as value)
     public static final ConcurrentHashMap<String, User> USERS = new ConcurrentHashMap<String, User>();
 
-
+    // static initializer block to data settings and users at startup
     static
     {
         try { SETTINGS = new ServerSettings(CONFIG_FILENAME); }
-        catch (IOException e) { throw new RuntimeException(e); }
+        catch (IOException e) { System.out.printf("[ERROR] Unable to load settings file: %s\n", e.getMessage()); }
 
         File file = new File(USERS_FILENAME);
 
@@ -54,11 +59,13 @@ public class GlobalData
                 {
                     jsonReader.beginObject();
 
+                    // ensure expected fields are present and named correctly
                     if (!jsonReader.nextName().equals("name")) { throw new JsonIOException(""); }
                     String name = jsonReader.nextString();
                     if (!jsonReader.nextName().equals("password")) { throw new JsonIOException(""); }
                     String password = jsonReader.nextString();
 
+                    // avoid overriding duplicate users (shouldn't be any)
                     if (USERS.containsKey(name)) { continue; }
                     USERS.put(name, new User(name, password));
 
@@ -67,21 +74,42 @@ public class GlobalData
 
                 jsonReader.endArray();
             }
-            catch (IOException e) { throw new RuntimeException(e); }
+            catch (IOException e) { System.out.printf("[ERROR] Unable to load users file: %s\n", e.getMessage()); }
         }
 
         LISTENER = new Listener();
     }
 
-    public static boolean UserExists(String name) { return USERS.containsKey(name); }
+    /**
+     * Checks if a user with the given usernamename exists in the registered users map.
+     *
+     * @param username The username to check.
+     * @return True if the user exists, false otherwise.
+     */
+    public static boolean UserExists(String username) { return USERS.containsKey(username); }
 
-    public static User UserFromName(String name) throws UserNotRegisteredException
+    /**
+     * Retrieves a User object from the registered users map based on the given username.
+     *
+     * @param username The username of the user to retrieve.
+     * @return The User object if found, otherwise throws a UserNotRegisteredException.
+     * @throws UserNotRegisteredException If no user with the given username is found.
+     */
+    public static User UserFromName(String username) throws UserNotRegisteredException
     {
-        User user = USERS.get(name);
+        User user = USERS.get(username);
         if (user == null) { throw new UserNotRegisteredException(); }
         return user;
     }
 
+    /**
+     * Attempts to register a new user.
+     *
+     * @param username The desired username for the new user.
+     * @param password The password for the new user.
+     * @return SimpleResponse.OK if registration is successful,
+     *         SimpleResponse.USERNAME_NOT_AVAILABLE if the username is already taken.
+     */
     public static SimpleResponse TryRegisterUser(String username, String password)
     {
         // attempt to insert the new user into the collection. Handle the case where the username is already taken,
@@ -93,8 +121,19 @@ public class GlobalData
         return RegisterRequest.OK;
     }
 
+    public static MarketOrder CreateMarketOrder()
+    {
+        return null;
+    }
+
+    /**
+     * Saves server settings and user data to their respective files.
+     */
     public static void Save()
     {
+        try { SETTINGS.Save();}
+        catch (IOException e) { System.out.printf("[ERROR] Unable to save settings to file: %s\n", e.getMessage()); }
+
         File file = new File(USERS_FILENAME);
 
         try(FileWriter fileWriter = new FileWriter(file);
@@ -104,6 +143,8 @@ public class GlobalData
             jsonWriter.beginArray();
 
             Set<Map.Entry<String, User>> entrySet = USERS.entrySet();
+
+            // iterate through user map and write user data to JSON file
             for (Map.Entry<String, User> entry : entrySet) {
                 jsonWriter.beginObject();
                 jsonWriter.name("name").value(entry.getValue().GetUsername());
@@ -113,6 +154,6 @@ public class GlobalData
 
             jsonWriter.endArray();
         }
-        catch (IOException e) { throw new RuntimeException(e); }
+        catch (IOException e) { System.out.printf("[ERROR] Unable to save users to file: %s\n", e.getMessage()); }
     }
 }

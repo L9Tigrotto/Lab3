@@ -9,13 +9,13 @@ import java.net.Socket;
 import java.util.Scanner;
 
 /**
- * This class represents the main entry point of the application. It establishes a connection to the server,
+ * This class represents the main entry point for the client application. It establishes a connection to the server,
  * reads user input in a loop, and processes the user commands by delegating them to the appropriate methods
  * in the RequestHandler class.
  */
 public class Main
 {
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args)
     {
         // attempt to connect to the server
         Socket socket;
@@ -29,7 +29,7 @@ public class Main
         // create a connection object
         Connection connection;
         try { connection = new Connection(socket); }
-        catch (IOException e) { System.err.println(e.getMessage()); return; }
+        catch (IOException e) { System.err.printf("[ERROR] Unable to create connection: %s\n", e.getMessage()); return; }
 
         // print the available options to the user
         PrintOptions();
@@ -53,17 +53,20 @@ public class Main
             else if (command.equalsIgnoreCase("insertLimitOrder")) { isConnectionAlive = RequestHandler.SendInsertLimitOrder(connection, words); }
             else if (command.equalsIgnoreCase("insertStopOrder")) { isConnectionAlive = RequestHandler.SendInsertStopOrder(connection, words); }
             else if (command.equalsIgnoreCase("cancelOrder")) { isConnectionAlive = RequestHandler.SendCancelOrder(connection, words); }
-            else { System.out.println("Unknown command. 'help' to see options."); }
+            else { System.out.println("[WARNING] Unknown command. 'help' to see options."); }
 
             // check if connection with the server is still alive
-            if (!isConnectionAlive) { System.out.println("[Error] Connection closed by the server"); }
+            if (!isConnectionAlive) { System.out.println("[ERROR] Connection closed by the server"); }
         }
 
         if (isConnectionAlive)
         {
             try { connection.Close(); }
-            catch (IOException e) { System.err.println(e.getMessage()); }
+            catch (IOException e) { System.err.printf("[ERROR] Unable to close the connection properly: %s\n", e.getMessage()); }
         }
+
+        // save settings
+        GlobalData.Save();
     }
 
     /**
@@ -90,7 +93,6 @@ public class Main
      */
     private static String GetStringInput()
     {
-        Scanner scanner = new Scanner(System.in);
-        return scanner.nextLine();
+        try (Scanner scanner = new Scanner(System.in)) { return scanner.nextLine(); }
     }
 }

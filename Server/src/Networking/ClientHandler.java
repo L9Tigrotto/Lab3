@@ -78,7 +78,7 @@ public class ClientHandler implements Runnable
             }
             catch (IOException e)
             {
-                System.out.println("[Error] Unable to close connection, interrupting communications with client");
+                System.out.println("[ERROR] Unable to close connection, interrupting communications with the client");
                 return;
             }
         }
@@ -104,7 +104,7 @@ public class ClientHandler implements Runnable
 
                 if (terminate)
                 {
-                    System.out.println("[Warning] Inactive client detected, closing connection");
+                    System.out.println("[WARNING] Inactive client detected, closing connection");
 
                     // if a user is associated with this connection, mark them as disconnected.
                     if (_user != null) { _user.TryLogout(); }
@@ -115,10 +115,16 @@ public class ClientHandler implements Runnable
             }
         }
         catch (InterruptedException ignored) { }
+        catch (IOException e) { System.out.printf("[ERROR] Checking if any data is available: %s\n", e.getMessage()); }
+    }
+
+    private void SendResponse(Response response) throws IOException
+    {
+        try { _connection.Send(response); }
         catch (IOException e)
         {
-            System.out.println("[Error] Generic error");
-            System.err.println(e.getMessage());
+            System.out.printf("[ERROR] Unable to send response: %s\n", e.getMessage());
+            _connection.Close();
         }
     }
 
@@ -146,12 +152,7 @@ public class ClientHandler implements Runnable
         // attempt to register the user and get the response
         else { response = GlobalData.TryRegisterUser(username, password); }
 
-        try { _connection.Send(response); }
-        catch (IOException e)
-        {
-            System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Close();
-        }
+        SendResponse(response);
     }
 
     /**
@@ -189,12 +190,7 @@ public class ClientHandler implements Runnable
             } catch (UserNotRegisteredException e) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
         }
 
-        try { _connection.Send(response); }
-        catch (IOException e)
-        {
-            System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Close();
-        }
+        SendResponse(response);
     }
 
     /**
@@ -232,12 +228,7 @@ public class ClientHandler implements Runnable
         }
 
 
-        try { _connection.Send(response); }
-        catch (IOException e)
-        {
-            System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Close();
-        }
+        SendResponse(response);
     }
 
     /**
@@ -263,12 +254,7 @@ public class ClientHandler implements Runnable
             if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = null; }
         }
 
-        try { _connection.Send(response); }
-        catch (IOException e)
-        {
-            System.out.printf("[Error] %s\n", e.getMessage());
-            _connection.Close();
-        }
+        SendResponse(response);
     }
 
     private void HandleInsertLimitOrderRequest(Request request) throws IOException

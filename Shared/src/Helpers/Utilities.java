@@ -1,3 +1,4 @@
+
 package Helpers;
 
 import java.io.IOException;
@@ -44,11 +45,11 @@ public class Utilities
                 // if wasn't last retry
                 if (tryCount < tries)
                 {
-                    System.out.printf("[ERROR] Could not connect to %s:%d. Retrying in %d ms.\n", ip, port, timeout);
+                    System.out.printf("[ERROR] Could not connect to %s:%d. Retrying in %d ms\n", ip, port, timeout);
                     Thread.sleep(timeout); // pause before next retry
                 }
                 // log final failure message
-                else { System.out.println("[Error] Failed to connect to server."); }
+                else { System.out.printf("[ERROR] Failed to connect to server: %s\n", e.getMessage()); }
             }
         }
 
