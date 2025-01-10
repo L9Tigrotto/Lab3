@@ -1,6 +1,7 @@
 package Orders;
 
 import Messages.OrderResponse;
+import Messages.RegisterRequest;
 
 import java.util.PriorityQueue;
 
@@ -17,6 +18,7 @@ public class OrderBook
             = new PriorityQueue<Order>((orderA, orderB) -> {
                 int cmp = Long.compare(orderA.GetPrice(), orderB.GetPrice());
                 if (cmp == 0) { cmp = Long.compare(orderA.GetTime(), orderB.GetTime()); }
+                if (cmp == 0) { cmp = Long.compare(orderA.GetID(), orderB.GetID()); }
                 return cmp;
             });
 
@@ -30,6 +32,7 @@ public class OrderBook
             = new PriorityQueue<Order>((orderA, orderB) -> {
                 int cmp = -Long.compare(orderA.GetPrice(), orderB.GetPrice());
                 if (cmp == 0) { cmp = Long.compare(orderA.GetTime(), orderB.GetTime()); }
+                if (cmp == 0) { cmp = Long.compare(orderA.GetID(), orderB.GetID()); }
                 return cmp;
             });
 
@@ -69,8 +72,40 @@ public class OrderBook
      */
     public static OrderResponse ProcessOrder(MarketOrder order)
     {
+        if (order.GetType() == Type.ASK)
+        {
+            MarketOrder askOrder = order;
 
-        return null;
+            synchronized (_bidOrders)
+            {
+                while (!_bidOrders.isEmpty())
+                {
+                    Order bidOrder = _bidOrders.peek();
+                    if (!askOrder.TrySellTo(bidOrder)) { break; }
+                    if (bidOrder.GetSize() == 0) { _bidOrders.poll(); }
+                    if (askOrder.GetSize() == 0) { break; }
+                }
+            }
+        }
+
+        if (order.GetType() == Type.BID)
+        {
+            MarketOrder bidOrder = order;
+
+            synchronized (_askOrders)
+            {
+                while (!_askOrders.isEmpty())
+                {
+                    Order askOrder = _askOrders.peek();
+                    if (!bidOrder.TryBuyFrom(askOrder)) { break; }
+                    if (askOrder.GetSize() == 0) { _askOrders.poll(); }
+                    if (bidOrder.GetSize() == 0) { break; }
+                }
+            }
+        }
+
+        if (order.GetSize())
+        return new OrderResponse(order.GetID());
     }
 
     /**
@@ -81,8 +116,49 @@ public class OrderBook
      */
     public static OrderResponse ProcessOrder(LimitOrder order)
     {
+        if (order.GetType() == Type.ASK)
+        {
+            LimitOrder askOrder = order;
 
-        return null;
+            synchronized (_bidOrders)
+            {
+                while (!_bidOrders.isEmpty())
+                {
+                    Order bidOrder = _bidOrders.peek();
+                    if (!askOrder.TrySellTo(bidOrder)) { break; }
+                    if (bidOrder.GetSize() == 0) { _bidOrders.poll(); }
+                    if (askOrder.GetSize() == 0) { break; }
+                }
+
+                if (askOrder.GetSize() > 0)
+                {
+                    synchronized (_askOrders) { _askOrders.add(askOrder); }
+                }
+            }
+        }
+
+        if (order.GetType() == Type.BID)
+        {
+            LimitOrder bidOrder = order;
+
+            synchronized (_askOrders)
+            {
+                while (!_askOrders.isEmpty())
+                {
+                    Order askOrder = _askOrders.peek();
+                    if (!bidOrder.TryBuyFrom(askOrder)) { break; }
+                    if (askOrder.GetSize() == 0) { _askOrders.poll(); }
+                    if (bidOrder.GetSize() == 0) { break; }
+                }
+
+                if (bidOrder.GetSize() > 0)
+                {
+                    synchronized (_bidOrders) { _bidOrders.add(bidOrder); }
+                }
+            }
+        }
+
+        return new OrderResponse(order.GetID());
     }
 
     /**

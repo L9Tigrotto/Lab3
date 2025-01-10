@@ -13,13 +13,13 @@ import java.net.Socket;
 public class Connection
 {
     // the underlying Socket object representing the network connection
-    protected final Socket _socket;
+    private final Socket _socket;
 
     // a DataInputStream for reading data from the socket's input stream
-    protected final DataInputStream _dataInputStream;
+    private final DataInputStream _dataInputStream;
 
     // a DataOutputStream for writing data to the socket's output stream
-    protected final DataOutputStream _dataOutputStream;
+    private final DataOutputStream _dataOutputStream;
 
     /**
      * Creates a new Connection object for the specified socket.

@@ -3,8 +3,6 @@ package Users;
 
 import Messages.*;
 
-import java.io.*;
-
 public class User
 {
     private final String _username;

@@ -4,8 +4,10 @@ package Helpers;
 import Messages.RegisterRequest;
 import Messages.SimpleResponse;
 import Networking.Listener;
+import Orders.LimitOrder;
 import Orders.MarketOrder;
 import Orders.Order;
+import Orders.Type;
 import Users.User;
 import Users.UserNotRegisteredException;
 import com.google.gson.FormattingStyle;
@@ -32,7 +34,7 @@ public class GlobalData
     private static final String USERS_FILENAME= "users.json";
 
     // the server settings object, loaded from the configuration file
-    public static ServerSettings SETTINGS;
+    public static final ServerSettings SETTINGS;
 
     // the listener object for handling incoming connections
     public static final Listener LISTENER;
@@ -44,7 +46,11 @@ public class GlobalData
     static
     {
         try { SETTINGS = new ServerSettings(CONFIG_FILENAME); }
-        catch (IOException e) { System.out.printf("[ERROR] Unable to load settings file: %s\n", e.getMessage()); }
+        catch (IOException e)
+        {
+            System.out.printf("[ERROR] Unable to load settings file: %s\n", e.getMessage());
+            throw new RuntimeException(e);
+        }
 
         File file = new File(USERS_FILENAME);
 
@@ -121,9 +127,29 @@ public class GlobalData
         return RegisterRequest.OK;
     }
 
-    public static MarketOrder CreateMarketOrder()
+    public static MarketOrder CreateMarketOrder(Type type)
     {
         return null;
+    }
+
+    public static LimitOrder CreateLimitOrder(Type type, long size, long limit, User user)
+    {
+        long id;
+        synchronized (SETTINGS) { id = SETTINGS.NextOrderID++; }
+
+        long time = System.currentTimeMillis();
+
+        return new LimitOrder(id, type, size, limit, time, user);
+    }
+
+    public static MarketOrder CreateStopOrder(Type type)
+    {
+        return null;
+    }
+
+    public static void InsertLimitOrder(LimitOrder order)
+    {
+
     }
 
     /**
