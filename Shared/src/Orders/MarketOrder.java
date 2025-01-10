@@ -12,6 +12,8 @@ public class MarketOrder extends Order
 
     public long GetLimit() { return GetSize(); }
 
+    public Cart CreateCart() { return new Cart(this); }
+
     public long CanSellTo(Order order)
     {
         if (GetType() != Type.ASK) { return 0; }

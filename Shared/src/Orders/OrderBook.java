@@ -72,40 +72,36 @@ public class OrderBook
      */
     public static OrderResponse ProcessOrder(MarketOrder order)
     {
+        Cart cart = order.CreateCart();
+
         if (order.GetType() == Type.ASK)
         {
-            MarketOrder askOrder = order;
-
             synchronized (_bidOrders)
             {
-                while (!_bidOrders.isEmpty())
+                for (Order bidOrder : _bidOrders)
                 {
-                    Order bidOrder = _bidOrders.peek();
-                    if (!askOrder.TrySellTo(bidOrder)) { break; }
-                    if (bidOrder.GetSize() == 0) { _bidOrders.poll(); }
-                    if (askOrder.GetSize() == 0) { break; }
+                    if (!cart.TrySell(bidOrder)) { break; }
                 }
+
+                if (cart.IsComplete()) { cart.SellAll(); }
             }
         }
 
         if (order.GetType() == Type.BID)
         {
-            MarketOrder bidOrder = order;
-
             synchronized (_askOrders)
             {
-                while (!_askOrders.isEmpty())
+                for (Order askOrder : _askOrders)
                 {
-                    Order askOrder = _askOrders.peek();
-                    if (!bidOrder.TryBuyFrom(askOrder)) { break; }
-                    if (askOrder.GetSize() == 0) { _askOrders.poll(); }
-                    if (bidOrder.GetSize() == 0) { break; }
+                    if (!cart.TryBuy(askOrder)) { break; }
                 }
+
+                if (cart.IsComplete()) { cart.BuyAll(); }
             }
         }
 
-        if (order.GetSize())
-        return new OrderResponse(order.GetID());
+        if (cart.IsComplete()) { return new OrderResponse(order.GetID()); }
+        else { return new OrderResponse(-1); }
     }
 
     /**
