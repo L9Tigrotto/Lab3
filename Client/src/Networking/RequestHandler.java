@@ -2,6 +2,7 @@
 package Networking;
 
 import Messages.*;
+import Orders.MarketOrder;
 import Orders.Type;
 import Users.User;
 
@@ -232,7 +233,11 @@ public class RequestHandler
         try { size = Long.parseLong(words[2]); }
         catch (NumberFormatException e) { System.out.println("[ERROR] <size> is not a number"); return true; }
 
-        // TODO
+        MarketOrderRequest request = new MarketOrderRequest(type, size);
+        OrderResponse response = (OrderResponse) SendAndWaitResponse(connection, request);
+        if (response == null) { return false; }
+
+        PrintOrderResponse(response);
         return true;
     }
 
@@ -328,7 +333,11 @@ public class RequestHandler
         try { stopPrice = Long.parseLong(words[3]); }
         catch (NumberFormatException e) { System.out.println("[ERROR] <stopPrice> is not a number"); return true; }
 
-        // TODO
+        StopOrderRequest request = new StopOrderRequest(type, size, stopPrice);
+        OrderResponse response = (OrderResponse) SendAndWaitResponse(connection, request);
+        if (response == null) { return false; }
+
+        PrintOrderResponse(response);
         return true;
     }
 
