@@ -10,19 +10,9 @@ public class MarketOrder extends Order
         super(id, type, size, 0, time, user);
     }
 
-    public long GetLimit() { return GetSize(); }
-
     public Cart CreateCart() { return new Cart(this); }
 
     public long CanSellTo(Order order)
-    {
-        if (GetType() != Type.ASK) { return 0; }
-        if (order.GetType() != Type.BID) { return 0; }
-
-        return Math.min(GetSize(), order.GetSize());
-    }
-
-    public long CanBuyFrom(Order order)
     {
         if (GetType() != Type.BID) { return 0; }
         if (order.GetType() != Type.ASK) { return 0; }
@@ -30,25 +20,31 @@ public class MarketOrder extends Order
         return Math.min(GetSize(), order.GetSize());
     }
 
+    public long CanBuyFrom(Order order)
+    {
+        if (GetType() != Type.ASK) { return 0; }
+        if (order.GetType() != Type.BID) { return 0; }
+
+        return Math.min(GetSize(), order.GetSize());
+    }
+
     public boolean TrySellTo(Order order)
     {
-        if (GetType() != Type.ASK) { return false; }
-        if (order.GetType() != Type.BID) { return false; }
+        long amount = CanSellTo(order);
+        if (amount == 0) { return false; }
 
-        long soldAmount = Math.min(GetSize(), order.GetSize());
-        ChangeSize(soldAmount);
-        order.ChangeSize(soldAmount);
+        ChangeSize(amount);
+        order.ChangeSize(amount);
         return true;
     }
 
     public boolean TryBuyFrom(Order order)
     {
-        if (GetType() != Type.BID) { return false; }
-        if (order.GetType() != Type.ASK) { return false; }
+        long amount = CanBuyFrom(order);
+        if (amount == 0) { return false; }
 
-        long soldAmount = Math.min(GetSize(), order.GetSize());
-        ChangeSize(soldAmount);
-        order.ChangeSize(soldAmount);
+        ChangeSize(amount);
+        order.ChangeSize(amount);
         return true;
     }
 }

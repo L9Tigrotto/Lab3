@@ -29,6 +29,8 @@ public abstract class Order
     public long GetTime() { return _time; }
     public User GetUser() { return _user; }
 
+    public boolean IsConsumed() { return _size == 0; }
+
     public void ChangeSize(long size) { _size -= size; }
 
     public abstract long CanSellTo(Order order);

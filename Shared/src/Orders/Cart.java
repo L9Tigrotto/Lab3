@@ -17,19 +17,19 @@ public class Cart
         _targetSize = order.GetSize();
     }
 
-    public boolean TrySell(Order order)
+    public boolean TrySellTo(Order askOrder)
     {
-        long size = _order.CanSellTo(order);
+        long size = _order.CanSellTo(askOrder);
 
         if (size == 0) { return false; }
 
-        _orders.add(order);
+        _orders.add(askOrder);
         _targetSize -= size;
 
         return _targetSize != 0;
     }
 
-    public boolean TryBuy(Order order)
+    public boolean TryBuyFrom(Order order)
     {
         long size = _order.CanBuyFrom(order);
 
@@ -41,31 +41,31 @@ public class Cart
         return _targetSize != 0;
     }
 
-    public boolean IsComplete() { return _targetSize == 0; }
+    public boolean IsOrderConsumed() { return _targetSize == 0; }
 
     public List<Order> SellAll()
     {
-        List<Order> emptyOrders = new ArrayList<>();
+        List<Order> consumedOrders = new ArrayList<>();
 
         for (Order order : _orders)
         {
             _order.TrySellTo(order);
-            if (order.GetSize() == 0) { emptyOrders.add(order); }
+            if (order.GetSize() == 0) { consumedOrders.add(order); }
         }
 
-        return emptyOrders;
+        return consumedOrders;
     }
 
     public List<Order> BuyAll()
     {
-        List<Order> emptyOrders = new ArrayList<>();
+        List<Order> consumedOrders = new ArrayList<>();
 
         for (Order order : _orders)
         {
             _order.TryBuyFrom(order);
-            if (order.GetSize() == 0) { emptyOrders.add(order); }
+            if (order.GetSize() == 0) { consumedOrders.add(order); }
         }
 
-        return emptyOrders;
+        return consumedOrders;
     }
 }

@@ -17,4 +17,13 @@ public enum Type
             default -> "unknown";
         };
     }
+
+    public static Type FromString(String text)
+    {
+        return switch (text) {
+            case "bid" -> BID;
+            case "ask" -> ASK;
+            default -> null;
+        };
+    }
 }

@@ -1,7 +1,6 @@
 package Orders;
 
 import Messages.OrderResponse;
-import Messages.RegisterRequest;
 
 import java.util.List;
 import java.util.PriorityQueue;
@@ -73,40 +72,50 @@ public class OrderBook
      */
     public static OrderResponse ProcessOrder(MarketOrder order)
     {
+        // create a cart object to track the execution of the market order
         Cart cart = order.CreateCart();
 
         if (order.GetType() == Type.ASK)
         {
+            // synchronize access to the bid order list to prevent race conditions
             synchronized (_bidOrders)
             {
+                // iterate through existing bid orders and attempt to buy from them consuming the whole market order
                 for (Order bidOrder : _bidOrders)
                 {
-                    if (!cart.TrySell(bidOrder)) { break; }
+                    if (!cart.TryBuyFrom(bidOrder)) { break; }
                 }
 
-                if (cart.IsComplete())
+                // if the market order is consumed, get the list of consumed bid orders that were bought and remove
+                // them from the bid order list
+                if (cart.IsOrderConsumed())
                 {
-                    List<Order> emptyOrders = cart.SellAll();
-                    for (Order bidOrder : emptyOrders) { _bidOrders.remove(bidOrder); }
+                    List<Order> consumedOrders = cart.SellAll();
+                    for (Order bidOrder : consumedOrders) { _bidOrders.remove(bidOrder); }
                 }
             }
         }
 
         if (order.GetType() == Type.BID)
         {
+            // synchronize access to the ask order list to prevent race conditions
             synchronized (_askOrders)
             {
+                // iterate through existing ask orders and attempt to sell the whole market order to them
                 for (Order askOrder : _askOrders)
                 {
-                    if (!cart.TryBuy(askOrder)) { break; }
+                    if (!cart.TrySellTo(askOrder)) { break; }
                 }
 
+                // if the market order is consumed, get the list of consumed ask orders that the market order was sold
+                // to and remove them from the bid order list
                 List<Order> emptyOrders = cart.BuyAll();
                 for (Order askOrder : emptyOrders) { _askOrders.remove(askOrder); }
             }
         }
 
-        if (cart.IsComplete()) { return new OrderResponse(order.GetID()); }
+        // return success if the market order is consumed, otherwise return failure
+        if (cart.IsOrderConsumed()) { return new OrderResponse(order.GetID()); }
         else { return new OrderResponse(-1); }
     }
 
@@ -120,42 +129,50 @@ public class OrderBook
     {
         if (order.GetType() == Type.ASK)
         {
-            LimitOrder askOrder = order;
-
+            // synchronize access to the bid order list to prevent race conditions
             synchronized (_bidOrders)
             {
-                while (!_bidOrders.isEmpty())
+                // iterate through bid orders while there are some and the limit order isn't consumed
+                while (!_bidOrders.isEmpty() && !order.IsConsumed())
                 {
                     Order bidOrder = _bidOrders.peek();
-                    if (!askOrder.TrySellTo(bidOrder)) { break; }
-                    if (bidOrder.GetSize() == 0) { _bidOrders.poll(); }
-                    if (askOrder.GetSize() == 0) { break; }
+                    if (bidOrder == null) { _bidOrders.poll(); continue; } // should not happen
+
+                    if (!order.TryBuyFrom(bidOrder)) { break; }
+
+                    // if the bid order is consumed, remove it from the list
+                    if (bidOrder.IsConsumed()) { _bidOrders.poll(); }
                 }
 
-                if (askOrder.GetSize() > 0)
+                // if the limit order isn't fully consumed, add it to the ask orders
+                if (!order.IsConsumed())
                 {
-                    synchronized (_askOrders) { _askOrders.add(askOrder); }
+                    synchronized (_askOrders) { _askOrders.add(order); }
                 }
             }
         }
 
         if (order.GetType() == Type.BID)
         {
-            LimitOrder bidOrder = order;
-
+            // synchronize access to the ask order list to prevent race conditions
             synchronized (_askOrders)
             {
-                while (!_askOrders.isEmpty())
+                // iterate through ask orders while there are some and the limit order isn't consumed
+                while (!_askOrders.isEmpty() && !order.IsConsumed())
                 {
                     Order askOrder = _askOrders.peek();
-                    if (!bidOrder.TryBuyFrom(askOrder)) { break; }
-                    if (askOrder.GetSize() == 0) { _askOrders.poll(); }
-                    if (bidOrder.GetSize() == 0) { break; }
+                    if (askOrder == null) { _askOrders.poll(); continue; } // should not happen
+
+                    if (!order.TrySellTo(askOrder)) { break; }
+
+                    // if the ask order is consumed, remove it from the list
+                    if (askOrder.IsConsumed()) { _askOrders.poll(); }
                 }
 
-                if (bidOrder.GetSize() > 0)
+                // if the limit order isn't fully consumed, add it to the bid orders
+                if (!order.IsConsumed())
                 {
-                    synchronized (_bidOrders) { _bidOrders.add(bidOrder); }
+                    synchronized (_bidOrders) { _bidOrders.add(order); }
                 }
             }
         }
