@@ -2,6 +2,7 @@
 package Networking;
 
 import Messages.*;
+import Orders.Type;
 import Users.User;
 
 import java.io.IOException;
@@ -218,8 +219,8 @@ public class RequestHandler
         }
 
         // validate the order type (bid or ask)
-        String type = words[1];
-        if (!type.equalsIgnoreCase("bid") && !type.equalsIgnoreCase("ask"))
+        Type type = Type.FromString(words[1]);
+        if (type == null)
         {
             System.out.println("[ERROR] <type> must be one of: bid, ask");
             return true;
@@ -259,8 +260,8 @@ public class RequestHandler
         }
 
         // validate the order type (bid or ask)
-        String type = words[1];
-        if (!type.equalsIgnoreCase("bid") && !type.equalsIgnoreCase("ask"))
+        Type type = Type.FromString(words[1]);
+        if (type == null)
         {
             System.out.println("[ERROR] <type> must be one of: bid, ask");
             return true;
@@ -279,7 +280,11 @@ public class RequestHandler
             return true;
         }
 
-        // TODO
+        LimitOrderRequest request = new LimitOrderRequest(type, size, limit);
+        OrderResponse response = (OrderResponse) SendAndWaitResponse(connection, request);
+        if (response == null) { return false; }
+
+        PrintOrderResponse(response);
         return true;
     }
 
@@ -307,8 +312,8 @@ public class RequestHandler
         }
 
         // validate the order type (bid or ask)
-        String type = words[1];
-        if (!type.equalsIgnoreCase("bid") && !type.equalsIgnoreCase("ask"))
+        Type type = Type.FromString(words[1]);
+        if (type == null)
         {
             System.out.println("[ERROR] <type> must be one of: bid, ask");
             return true;

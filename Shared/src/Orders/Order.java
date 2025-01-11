@@ -33,11 +33,43 @@ public abstract class Order
 
     public void ChangeSize(long size) { _size -= size; }
 
-    public abstract long CanSellTo(Order order);
-    public abstract long CanBuyFrom(Order order);
+    public long CanSellTo(Order order)
+    {
+        if (GetType() != Type.ASK) { return 0; }
+        if (order.GetType() != Type.BID) { return 0; }
+        if (GetPrice() > order.GetPrice()) { return 0; }
 
-    public abstract boolean TrySellTo(Order order);
-    public abstract boolean TryBuyFrom(Order order);
+        return Math.min(GetSize(), order.GetSize());
+    }
+
+    public long CanBuyFrom(Order order)
+    {
+        if (GetType() != Type.BID) { return 0; }
+        if (order.GetType() != Type.ASK) { return 0; }
+        if (GetPrice() < order.GetPrice()) { return 0; }
+
+        return Math.min(GetSize(), order.GetSize());
+    }
+
+    public boolean TrySellTo(Order order)
+    {
+        long amount = CanSellTo(order);
+        if (amount == 0) { return false; }
+
+        ChangeSize(amount);
+        order.ChangeSize(amount);
+        return true;
+    }
+
+    public boolean TryBuyFrom(Order order)
+    {
+        long amount = CanBuyFrom(order);
+        if (amount == 0) { return false; }
+
+        ChangeSize(amount);
+        order.ChangeSize(amount);
+        return true;
+    }
 
     public boolean Equals(Order other) { return _id == other._id; }
 }

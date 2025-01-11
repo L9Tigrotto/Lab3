@@ -61,7 +61,59 @@ public class OrderBook
 
     static
     {
-        //askRegistry.add()
+        _askOrders.add(new LimitOrder(0, Type.ASK, 100, 2500, System.currentTimeMillis(), null));
+        _askOrders.add(new LimitOrder(1, Type.ASK, 200, 2500, System.currentTimeMillis(), null));
+        _askOrders.add(new LimitOrder(2, Type.ASK, 600, 2200, System.currentTimeMillis(), null));
+        _askOrders.add(new LimitOrder(3, Type.ASK, 100, 8000, System.currentTimeMillis(), null));
+    }
+
+    public static String Info(PriorityQueue<Order> orderQueue)
+    {
+        StringBuilder info = new StringBuilder();
+        info.append(String.format("%10s%10s%10s\n", "Price", "Size", "Total"));
+
+        if(orderQueue.isEmpty())
+            return info.toString();
+
+        PriorityQueue<Order> orders = new PriorityQueue<>(orderQueue);
+        Order order = orders.poll();
+
+        long price = order.GetPrice();
+        long size = order.GetSize();
+
+        while(!orders.isEmpty())
+        {
+            order = orders.poll();
+            if(order.GetPrice() == price)
+            {
+                size += order.GetSize();
+            }
+            else
+            {
+                info.append(String.format("%10d%10d%10d\n", price, size, price * size));
+
+                price = order.GetPrice();
+                size = order.GetSize();
+            }
+        }
+
+        info.append(String.format("%10d%10d%10d\n", price, size, price * size));
+        return info.toString();
+    }
+
+    public static String GetStatus()
+    {
+        String status = "";
+        status += String.format("%20s\n", "Ask Side");
+
+        status += Info(_askOrders);
+
+        status += "-------------------------------------\n";
+
+        status += String.format("%20s\n", "Bid Side");
+        status += Info(_bidOrders);
+
+        return status;
     }
 
     /**
@@ -83,7 +135,7 @@ public class OrderBook
                 // iterate through existing bid orders and attempt to buy from them consuming the whole market order
                 for (Order bidOrder : _bidOrders)
                 {
-                    if (!cart.TryBuyFrom(bidOrder)) { break; }
+                    if (!cart.TrySellTo(bidOrder)) { break; }
                 }
 
                 // if the market order is consumed, get the list of consumed bid orders that were bought and remove
@@ -104,7 +156,7 @@ public class OrderBook
                 // iterate through existing ask orders and attempt to sell the whole market order to them
                 for (Order askOrder : _askOrders)
                 {
-                    if (!cart.TrySellTo(askOrder)) { break; }
+                    if (!cart.TryBuyFrom(askOrder)) { break; }
                 }
 
                 // if the market order is consumed, get the list of consumed ask orders that the market order was sold
@@ -138,7 +190,7 @@ public class OrderBook
                     Order bidOrder = _bidOrders.peek();
                     if (bidOrder == null) { _bidOrders.poll(); continue; } // should not happen
 
-                    if (!order.TryBuyFrom(bidOrder)) { break; }
+                    if (!order.TrySellTo(bidOrder)) { break; }
 
                     // if the bid order is consumed, remove it from the list
                     if (bidOrder.IsConsumed()) { _bidOrders.poll(); }
@@ -163,7 +215,7 @@ public class OrderBook
                     Order askOrder = _askOrders.peek();
                     if (askOrder == null) { _askOrders.poll(); continue; } // should not happen
 
-                    if (!order.TrySellTo(askOrder)) { break; }
+                    if (!order.TryBuyFrom(askOrder)) { break; }
 
                     // if the ask order is consumed, remove it from the list
                     if (askOrder.IsConsumed()) { _askOrders.poll(); }

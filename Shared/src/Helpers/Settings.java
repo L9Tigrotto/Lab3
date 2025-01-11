@@ -61,7 +61,10 @@ public abstract class Settings
      */
     public void Save() throws IOException
     {
+        Update(_properties);
         File configFile = new File(_filename);
         try (FileWriter writer = new FileWriter(configFile)) { _properties.store(writer, ""); }
     }
+
+    protected abstract void Update(Properties properties);
 }

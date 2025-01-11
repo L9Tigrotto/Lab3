@@ -37,4 +37,7 @@ public class ClientSettings extends Settings
         ConnectionRetries = Integer.parseInt(properties.getProperty("ConnectionRetries"));
         ConnectionRetryTimeoutMS = Integer.parseInt(properties.getProperty("ConnectionRetryTimeoutMS"));
     }
+
+    @Override
+    protected void Update(Properties properties) { }
 }

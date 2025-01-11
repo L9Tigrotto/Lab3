@@ -1,6 +1,7 @@
 
 import Helpers.GlobalData;
 import Helpers.ServerSettings;
+import Orders.OrderBook;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -26,6 +27,10 @@ public class Main
             {
                 String input = scanner.nextLine().trim();
                 if (input.equalsIgnoreCase("stop")) { break; }
+                if (input.equalsIgnoreCase("status"))
+                {
+                    System.out.println(OrderBook.GetStatus());
+                }
             }
         }
 

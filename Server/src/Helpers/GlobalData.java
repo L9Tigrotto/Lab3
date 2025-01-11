@@ -156,11 +156,6 @@ public class GlobalData
 
     }
 
-    public static void InsertLimitOrder(LimitOrder order)
-    {
-
-    }
-
     /**
      * Saves server settings and user data to their respective files.
      */

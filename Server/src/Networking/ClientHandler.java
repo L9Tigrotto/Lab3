@@ -91,8 +91,6 @@ public class ClientHandler implements Runnable
         {
             while(!GlobalData.LISTENER.IsStopRequested() && !_connection.IsDataAvailable())
             {
-                Thread.sleep(GlobalData.SETTINGS.WaitDataTimeoutMS);
-
                 // calculate the elapsed time since the last message was received and check if it exceeds the
                 // inactivity threshold
                 long elapsedTime = System.currentTimeMillis() - _lastMessageTime;
@@ -108,6 +106,8 @@ public class ClientHandler implements Runnable
                     _connection.Close();
                     return;
                 }
+
+                Thread.sleep(GlobalData.SETTINGS.WaitDataTimeoutMS);
             }
         }
         catch (InterruptedException ignored) { }

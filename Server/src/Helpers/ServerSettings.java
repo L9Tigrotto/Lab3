@@ -48,4 +48,10 @@ public class ServerSettings extends Settings
         ClientInactiveThresholdMS = Integer.parseInt(properties.getProperty("ClientInactiveThresholdMS"));
         NextOrderID = Integer.parseInt(properties.getProperty("NextOrderID"));
     }
+
+    @Override
+    protected void Update(Properties properties)
+    {
+        properties.setProperty("NextOrderID", String.valueOf(NextOrderID));
+    }
 }

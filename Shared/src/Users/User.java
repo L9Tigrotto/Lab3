@@ -20,7 +20,13 @@ public class User
     public String GetPassword() { return _password; }
     public boolean IsConnected() { return _isConnected; }
 
-    public boolean MatchPassword(String newPassword) { return _password.equals(newPassword); }
+    public boolean MatchPassword(String newPassword)
+    {
+        synchronized (this)
+        {
+            return _password.equals(newPassword);
+        }
+    }
 
     public SimpleResponse TryUpdatePassword(String oldPassword, String newPassword)
     {

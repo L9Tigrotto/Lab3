@@ -1,7 +1,9 @@
 
 package Networking;
 
+import Messages.OrderResponse;
 import Messages.SimpleResponse;
+import Orders.Order;
 import com.google.gson.FormattingStyle;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -78,7 +80,7 @@ public abstract class Response
             switch (temp)
             {
                 case "response" -> response = SimpleResponse.FromJson(jsonReader);
-                case "orderID" -> response = SimpleResponse.FromJson(jsonReader);
+                case "orderID" -> response = OrderResponse.FromJson(jsonReader);
                 default -> throw new IOException("Supposed to read a valid transmittable name from JSON (got " + temp + ")");
             }
 
