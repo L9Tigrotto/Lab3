@@ -1,13 +1,11 @@
 
 package Helpers;
 
-import Messages.RegisterRequest;
-import Messages.SimpleResponse;
+import Messages.*;
 import Networking.Listener;
 import Orders.LimitOrder;
 import Orders.MarketOrder;
-import Orders.Order;
-import Orders.Type;
+import Orders.StopOrder;
 import Users.User;
 import Users.UserNotRegisteredException;
 import com.google.gson.FormattingStyle;
@@ -127,24 +125,35 @@ public class GlobalData
         return RegisterRequest.OK;
     }
 
-    public static MarketOrder CreateMarketOrder(Type type)
-    {
-        return null;
-    }
-
-    public static LimitOrder CreateLimitOrder(Type type, long size, long limit, User user)
+    public static MarketOrder CreateMarketOrder(MarketOrderRequest request, User user)
     {
         long id;
         synchronized (SETTINGS) { id = SETTINGS.NextOrderID++; }
 
         long time = System.currentTimeMillis();
 
-        return new LimitOrder(id, type, size, limit, time, user);
+        return new MarketOrder(id, request.GetType(), request.GetSize(), time, user);
     }
 
-    public static MarketOrder CreateStopOrder(Type type)
+    public static LimitOrder CreateLimitOrder(LimitOrderRequest request, User user)
     {
-        return null;
+        long id;
+        synchronized (SETTINGS) { id = SETTINGS.NextOrderID++; }
+
+        long time = System.currentTimeMillis();
+
+        return new LimitOrder(id, request.GetType(), request.GetSize(), request.GetLimitPrice(), time, user);
+    }
+
+    public static StopOrder CreateStopOrder(StopOrderRequest request, User user)
+    {
+        long id;
+        synchronized (SETTINGS) { id = SETTINGS.NextOrderID++; }
+
+        long time = System.currentTimeMillis();
+
+        return new StopOrder(id, request.GetType(), request.GetSize(), request.GetPrice(), time, user);
+
     }
 
     public static void InsertLimitOrder(LimitOrder order)

@@ -3,6 +3,7 @@ package Networking;
 
 import Helpers.GlobalData;
 import Messages.*;
+import Orders.*;
 import Users.User;
 import Users.UserNotRegisteredException;
 
@@ -254,17 +255,50 @@ public class ClientHandler implements Runnable
 
     private void HandleInsertMarketOrderRequest(MarketOrderRequest request) throws IOException
     {
+        OrderResponse response;
 
+        // check if the user is currently logged in
+        if (_user == null) { response = OrderResponse.INVALID; }
+
+        else
+        {
+            MarketOrder order = GlobalData.CreateMarketOrder(request, _user);
+            response = OrderBook.ProcessOrder(order);
+        }
+
+        SendResponse(response);
     }
 
     private void HandleInsertLimitOrderRequest(LimitOrderRequest request) throws IOException
     {
+        OrderResponse response;
 
+        // check if the user is currently logged in
+        if (_user == null) { response = OrderResponse.INVALID; }
+
+        else
+        {
+            LimitOrder order = GlobalData.CreateLimitOrder(request, _user);
+            response = OrderBook.ProcessOrder(order);
+        }
+
+        SendResponse(response);
     }
 
     private void HandleInsertStopOrderRequest(StopOrderRequest request) throws IOException
     {
+        OrderResponse response;
 
+        // check if the user is currently logged in
+        if (_user == null) { response = OrderResponse.INVALID; }
+
+        else
+        {
+            StopOrder order = GlobalData.CreateStopOrder(request, _user);
+            response = OrderBook.ProcessOrder(order);
+        }
+
+        SendResponse(response);
     }
 
     private void HandleCancelOrderRequest(CancelOrderRequest request) throws IOException

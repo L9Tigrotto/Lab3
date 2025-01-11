@@ -25,7 +25,7 @@ public class LimitOrderRequest extends Request
 
     public Type GetType() { return _type; }
     public long GetSize() { return _size; }
-    public long GetPrice() { return _price; }
+    public long GetLimitPrice() { return _price; }
 
     protected void SerializeContent(JsonWriter jsonWriter) throws IOException
     {
