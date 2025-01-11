@@ -43,13 +43,29 @@ public class Cart
 
     public boolean IsComplete() { return _targetSize == 0; }
 
-    public void SellAll()
+    public List<Order> SellAll()
     {
-        for (Order order : _orders) { _order.TrySellTo(order); }
+        List<Order> emptyOrders = new ArrayList<>();
+
+        for (Order order : _orders)
+        {
+            _order.TrySellTo(order);
+            if (order.GetSize() == 0) { emptyOrders.add(order); }
+        }
+
+        return emptyOrders;
     }
 
-    public void BuyAll()
+    public List<Order> BuyAll()
     {
-        for (Order order : _orders) { _order.TryBuyFrom(order); }
+        List<Order> emptyOrders = new ArrayList<>();
+
+        for (Order order : _orders)
+        {
+            _order.TryBuyFrom(order);
+            if (order.GetSize() == 0) { emptyOrders.add(order); }
+        }
+
+        return emptyOrders;
     }
 }

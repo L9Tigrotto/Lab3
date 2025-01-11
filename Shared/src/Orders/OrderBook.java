@@ -3,6 +3,7 @@ package Orders;
 import Messages.OrderResponse;
 import Messages.RegisterRequest;
 
+import java.util.List;
 import java.util.PriorityQueue;
 
 public class OrderBook
@@ -83,7 +84,11 @@ public class OrderBook
                     if (!cart.TrySell(bidOrder)) { break; }
                 }
 
-                if (cart.IsComplete()) { cart.SellAll(); }
+                if (cart.IsComplete())
+                {
+                    List<Order> emptyOrders = cart.SellAll();
+                    for (Order bidOrder : emptyOrders) { _bidOrders.remove(bidOrder); }
+                }
             }
         }
 
@@ -96,7 +101,8 @@ public class OrderBook
                     if (!cart.TryBuy(askOrder)) { break; }
                 }
 
-                if (cart.IsComplete()) { cart.BuyAll(); }
+                List<Order> emptyOrders = cart.BuyAll();
+                for (Order askOrder : emptyOrders) { _askOrders.remove(askOrder); }
             }
         }
 
