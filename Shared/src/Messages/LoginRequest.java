@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Networking.OperationType;
 import Networking.Request;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -20,7 +21,7 @@ public class LoginRequest extends Request
 
     public LoginRequest(String username, String password)
     {
-        super("login");
+        super(OperationType.LOGIN);
         _username = username;
         _password = password;
     }

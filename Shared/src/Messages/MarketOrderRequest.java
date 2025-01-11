@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Networking.OperationType;
 import Networking.Request;
 import Orders.Type;
 import com.google.gson.stream.JsonReader;
@@ -15,7 +16,7 @@ public class MarketOrderRequest extends Request
 
     public MarketOrderRequest(Type type, long size)
     {
-        super("insertMarketOrder");
+        super(OperationType.INSERT_MARKET_ORDER);
         _type = type;
         _size = size;
     }
@@ -42,7 +43,7 @@ public class MarketOrderRequest extends Request
         if (!temp.equals("size")) { throw new IOException("Supposed to read 'size' from JSON (got " + temp + ")"); }
         long size;
         try { size = Long.parseLong(jsonReader.nextString()); }
-        catch (NumberFormatException e) { throw new RuntimeException("Invalid size from JSON (got " + temp + ")"); }
+        catch (NumberFormatException e) { throw new IOException("Invalid size from JSON (got " + temp + ")"); }
 
         return new MarketOrderRequest(type, size);
     }

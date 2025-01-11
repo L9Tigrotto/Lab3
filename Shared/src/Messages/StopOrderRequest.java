@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Networking.OperationType;
 import Networking.Request;
 import Orders.Type;
 import com.google.gson.stream.JsonReader;
@@ -15,7 +16,7 @@ public class StopOrderRequest extends Request
     private final long _price;
 
     public StopOrderRequest(Type type, long size, long price) {
-        super("insertStopOrder");
+        super(OperationType.INSERT_STOP_ORDER);
         _type = type;
         _size = size;
         _price = price;
@@ -43,14 +44,14 @@ public class StopOrderRequest extends Request
         if (!temp.equals("size")) { throw new IOException("Supposed to read 'size' from JSON (got " + temp + ")"); }
         long size;
         try { size = Long.parseLong(jsonReader.nextString()); }
-        catch (NumberFormatException e) { throw new RuntimeException("Invalid size from JSON (got " + temp + ")"); }
+        catch (NumberFormatException e) { throw new IOException("Invalid size from JSON (got " + temp + ")"); }
 
         // read the "price" field
         temp = jsonReader.nextName();
         if (!temp.equals("price")) { throw new IOException("Supposed to read 'price' from JSON (got " + temp + ")"); }
         long price;
         try { price = Long.parseLong(jsonReader.nextString()); }
-        catch (NumberFormatException e) { throw new RuntimeException("Invalid price from JSON (got " + temp + ")"); }
+        catch (NumberFormatException e) { throw new IOException("Invalid price from JSON (got " + temp + ")"); }
 
         return new StopOrderRequest(type, size, price);
     }

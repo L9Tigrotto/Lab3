@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Networking.OperationType;
 import Networking.Request;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -31,7 +32,7 @@ public class RegisterRequest extends Request
      */
     public RegisterRequest(String username, String password)
     {
-        super("register");
+        super(OperationType.REGISTER);
         _username = username;
         _password = password;
     }

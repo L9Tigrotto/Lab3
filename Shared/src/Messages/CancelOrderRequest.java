@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Networking.OperationType;
 import Networking.Request;
 import Orders.Type;
 import com.google.gson.stream.JsonReader;
@@ -14,7 +15,7 @@ public class CancelOrderRequest extends Request
 
     public CancelOrderRequest(long orderID)
     {
-        super("cancelOrder");
+        super(OperationType.CANCEL_ORDER);
         _orderID = orderID;
     }
 
@@ -32,7 +33,7 @@ public class CancelOrderRequest extends Request
         if (!temp.equals("orderID")) { throw new IOException("Supposed to read 'orderID' from JSON (got " + temp + ")"); }
         long orderID;
         try { orderID = Long.parseLong(jsonReader.nextString()); }
-        catch (NumberFormatException e) { throw new RuntimeException("Invalid orderID from JSON (got " + temp + ")"); }
+        catch (NumberFormatException e) { throw new IOException("Invalid orderID from JSON (got " + temp + ")"); }
 
         return new CancelOrderRequest(orderID);
     }

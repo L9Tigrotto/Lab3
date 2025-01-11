@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Networking.OperationType;
 import Networking.Request;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -23,7 +24,7 @@ public class UpdateCredentialsRequest  extends Request
 
     public UpdateCredentialsRequest(String username, String oldPassword, String newPassword)
     {
-        super("updateCredentials");
+        super(OperationType.UPDATE_CREDENTIALS);
         _username = username;
         _oldPassword = oldPassword;
         _newPassword = newPassword;

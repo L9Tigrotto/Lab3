@@ -17,22 +17,17 @@ import java.io.StringWriter;
  */
 public abstract class Request
 {
-    // the operation type of the request (e.g. "register", "login")
-    private final String _operation;
+    // the operation type of the request
+    private final OperationType _operation;
 
     /**
      * Constructor that takes the operation type of the request.
      *
      * @param operation The operation type of the request.
      */
-    public Request(String operation) { _operation = operation; }
+    public Request(OperationType operation) { _operation = operation; }
 
-    /**
-     * Gets the operation type of the request.
-     *
-     * @return The operation type as a string.
-     */
-    public String GetOperation() { return _operation; }
+    public OperationType GetOperation() { return _operation; }
 
     /**
      * Converts the request object to a well-formatted JSON string using Gson.
@@ -62,7 +57,7 @@ public abstract class Request
             jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
             jsonWriter.beginObject();
 
-            jsonWriter.name("operation").value(_operation);
+            jsonWriter.name("operation").value(_operation.ToString());
             jsonWriter.name("values");
             jsonWriter.beginObject();
             SerializeContent(jsonWriter);
@@ -95,7 +90,6 @@ public abstract class Request
     public static Request FromJson(String json) throws IOException
     {
         String temp;
-        String operation;
         Request request;
 
         try (StringReader stringReader = new StringReader(json);
@@ -106,7 +100,8 @@ public abstract class Request
             // read the "operation" field
             temp = jsonReader.nextName();
             if (!temp.equals("operation")) { throw new IOException("Supposed to read 'operation' name from JSON (got " + temp + ")"); }
-            operation = jsonReader.nextString();
+            OperationType operation = OperationType.FromString(jsonReader.nextString());
+            if (operation == null) { throw new IOException("Invalid operation from JSON (got " + temp + ")"); }
 
             // read the "values" field
             temp = jsonReader.nextName();
@@ -114,17 +109,17 @@ public abstract class Request
             jsonReader.beginObject();
 
             // handle different operation types
-            switch (operation)
-            {
-                case "register" -> request = RegisterRequest.DeserializeContent(jsonReader);
-                case "updateCredentials" -> request = UpdateCredentialsRequest.DeserializeContent(jsonReader);
-                case "login" -> request = LoginRequest.DeserializeContent(jsonReader);
-                case "logout" -> request = LogoutRequest.DeserializeContent(jsonReader);
-                case "insertMarketOrder" -> request = MarketOrderRequest.DeserializeContent(jsonReader);
-                case "insertLimitOrder" -> request = LimitOrderRequest.DeserializeContent(jsonReader);
-                case "insertStopOrder" -> request = StopOrderRequest.DeserializeContent(jsonReader);
-                case "cancelOrder" -> request = CancelOrderRequest.DeserializeContent(jsonReader);
-                default -> throw new IOException("Supposed to read a valid request name from JSON (got " + temp + ")");
+            switch (operation) {
+                case REGISTER -> request = RegisterRequest.DeserializeContent(jsonReader);
+                case UPDATE_CREDENTIALS -> request = UpdateCredentialsRequest.DeserializeContent(jsonReader);
+                case LOGIN -> request = LoginRequest.DeserializeContent(jsonReader);
+                case LOGOUT -> request = LogoutRequest.DeserializeContent(jsonReader);
+                case INSERT_MARKET_ORDER -> request = MarketOrderRequest.DeserializeContent(jsonReader);
+                case INSERT_LIMIT_ORDER -> request = LimitOrderRequest.DeserializeContent(jsonReader);
+                case INSERT_STOP_ORDER -> request = StopOrderRequest.DeserializeContent(jsonReader);
+                case CANCEL_ORDER -> request = CancelOrderRequest.DeserializeContent(jsonReader);
+                case GET_PRICE_HISTORY -> request = GetPriceHistoryRequest.DeserializeContent(jsonReader);
+                default -> throw new IOException("Invalid operation from JSON (got " + temp + ")");
             }
 
             jsonReader.endObject(); // end of "values" object

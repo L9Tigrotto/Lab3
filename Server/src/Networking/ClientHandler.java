@@ -1,3 +1,4 @@
+
 package Networking;
 
 import Helpers.GlobalData;
@@ -55,22 +56,16 @@ public class ClientHandler implements Runnable
                 Request request = _connection.ReceiveRequest();
 
                 // handle the request based on its operation type
-                switch (request.GetOperation())
-                {
-                    case "register" -> HandleRegisterRequest((RegisterRequest) request);
-                    case "updateCredentials" -> HandleUpdateCredentialRequest((UpdateCredentialsRequest) request);
-                    case "login" -> HandleLoginRequest((LoginRequest) request);
-                    case "logout" -> HandleLogoutRequest((LogoutRequest) request);
-                    case "insertMarketOrder" -> HandleInsertMarketOrderRequest((MarketOrderRequest) request);
-                    case "insertLimitOrder" -> HandleInsertLimitOrderRequest((LimitOrderRequest) request);
-                    case "insertStopOrder" -> HandleInsertStopOrderRequest((StopOrderRequest) request);
-                    case "cancelOrder" -> HandleCancelOrderRequest((CancelOrderRequest) request);
-                    case "getPriceHistory" -> HandleGetPriceHistoryRequest(request);
-                    default ->
-                    {
-                        System.out.printf("[Info] Received unknown request message %s, ignoring\n", request.GetOperation());
-                        continue;
-                    }
+                switch (request.GetOperation()){
+                    case REGISTER -> HandleRegisterRequest((RegisterRequest) request);
+                    case UPDATE_CREDENTIALS -> HandleUpdateCredentialRequest((UpdateCredentialsRequest) request);
+                    case LOGIN -> HandleLoginRequest((LoginRequest) request);
+                    case LOGOUT -> HandleLogoutRequest((LogoutRequest) request);
+                    case INSERT_MARKET_ORDER -> HandleInsertMarketOrderRequest((MarketOrderRequest) request);
+                    case INSERT_LIMIT_ORDER -> HandleInsertLimitOrderRequest((LimitOrderRequest) request);
+                    case INSERT_STOP_ORDER -> HandleInsertStopOrderRequest((StopOrderRequest) request);
+                    case CANCEL_ORDER -> HandleCancelOrderRequest((CancelOrderRequest) request);
+                    case GET_PRICE_HISTORY -> HandleGetPriceHistoryRequest((GetPriceHistoryRequest) request);
                 }
 
                 // update the last message time to track client activity
@@ -277,7 +272,7 @@ public class ClientHandler implements Runnable
 
     }
 
-    private void HandleGetPriceHistoryRequest(Request request) throws IOException
+    private void HandleGetPriceHistoryRequest(GetPriceHistoryRequest request) throws IOException
     {
 
     }
