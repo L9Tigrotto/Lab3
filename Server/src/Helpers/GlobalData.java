@@ -153,7 +153,6 @@ public class GlobalData
         long time = System.currentTimeMillis();
 
         return new StopOrder(id, request.GetType(), request.GetSize(), request.GetPrice(), time, user);
-
     }
 
     /**

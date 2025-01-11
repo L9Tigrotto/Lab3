@@ -3,7 +3,10 @@ package Networking;
 
 import Helpers.GlobalData;
 import Messages.*;
-import Orders.*;
+import Orders.LimitOrder;
+import Orders.MarketOrder;
+import Orders.OrderBook;
+import Orders.StopOrder;
 import Users.User;
 import Users.UserNotRegisteredException;
 
@@ -303,7 +306,14 @@ public class ClientHandler implements Runnable
 
     private void HandleCancelOrderRequest(CancelOrderRequest request) throws IOException
     {
+        SimpleResponse response;
 
+        // check if the user is currently logged in
+        if (_user == null) { response = CancelOrderRequest.OTHER_ERROR_CASES; }
+
+        else { response = OrderBook.TryCancelOrder(request, _user); }
+
+        SendResponse(response);
     }
 
     private void HandleGetPriceHistoryRequest(GetPriceHistoryRequest request) throws IOException

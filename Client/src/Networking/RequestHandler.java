@@ -18,7 +18,7 @@ public class RequestHandler
      *
      * @param response The SimpleResponse object to print.
      */
-    private static void PrintSimpleResponse(SimpleResponse response)
+    private static void PrintResponse(SimpleResponse response)
     {
         System.out.printf("[INFO] Response received.\n\t-> Code: %d\n\t-> Message: %s\n", response.GetResponse(), response.GetErrorMessage());
     }
@@ -28,9 +28,9 @@ public class RequestHandler
      *
      * @param response The OrderResponse object to print.
      */
-    private static void PrintOrderResponse(OrderResponse response)
+    private static void PrintResponse(OrderResponse response)
     {
-        System.out.printf("[INFO] Response received.\n\t-> OrderID: %d", response.GetOrderID());
+        System.out.printf("[INFO] Response received.\n\t-> OrderID: %d\n", response.GetOrderID());
     }
 
     /**
@@ -81,7 +81,7 @@ public class RequestHandler
 
         SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, register);
         if (response == null) { return false; }
-        PrintSimpleResponse(response);
+        PrintResponse(response);
         return true;
     }
 
@@ -115,7 +115,7 @@ public class RequestHandler
 
         SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, updateCredentials);
         if (response == null) { return false; }
-        PrintSimpleResponse(response);
+        PrintResponse(response);
         return true;
     }
 
@@ -151,7 +151,7 @@ public class RequestHandler
 
         // update the current user if login is successful
         if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = new User(username, password); }
-        PrintSimpleResponse(response);
+        PrintResponse(response);
         return true;
     }
 
@@ -192,7 +192,7 @@ public class RequestHandler
         if (response == null) { return false; }
 
         if (response.GetResponse() == LogoutRequest.OK.GetResponse()) { _user = null; }
-        PrintSimpleResponse(response);
+        PrintResponse(response);
         return true;
     }
 
@@ -237,7 +237,7 @@ public class RequestHandler
         OrderResponse response = (OrderResponse) SendAndWaitResponse(connection, request);
         if (response == null) { return false; }
 
-        PrintOrderResponse(response);
+        PrintResponse(response);
         return true;
     }
 
@@ -289,7 +289,7 @@ public class RequestHandler
         OrderResponse response = (OrderResponse) SendAndWaitResponse(connection, request);
         if (response == null) { return false; }
 
-        PrintOrderResponse(response);
+        PrintResponse(response);
         return true;
     }
 
@@ -337,7 +337,7 @@ public class RequestHandler
         OrderResponse response = (OrderResponse) SendAndWaitResponse(connection, request);
         if (response == null) { return false; }
 
-        PrintOrderResponse(response);
+        PrintResponse(response);
         return true;
     }
 
@@ -366,11 +366,14 @@ public class RequestHandler
 
         // validate the order id (number)
         long orderID;
-
         try { orderID = Long.parseLong(words[1]); }
-        catch (NumberFormatException e) { System.out.println("[ERROR] <size> is not a number"); return true; }
+        catch (NumberFormatException e) { System.out.println("[ERROR] <orderID> is not a number"); return true; }
 
-        // TODO
+        CancelOrderRequest request = new CancelOrderRequest(orderID);
+        SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, request);
+        if (response == null) { return false; }
+
+        PrintResponse(response);
         return true;
     }
 }

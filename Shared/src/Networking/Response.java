@@ -3,7 +3,6 @@ package Networking;
 
 import Messages.OrderResponse;
 import Messages.SimpleResponse;
-import Orders.Order;
 import com.google.gson.FormattingStyle;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;

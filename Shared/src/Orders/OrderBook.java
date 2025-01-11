@@ -1,6 +1,9 @@
 package Orders;
 
+import Messages.CancelOrderRequest;
 import Messages.OrderResponse;
+import Messages.SimpleResponse;
+import Users.User;
 
 import java.util.List;
 import java.util.PriorityQueue;
@@ -61,10 +64,7 @@ public class OrderBook
 
     static
     {
-        _askOrders.add(new LimitOrder(0, Type.ASK, 100, 2500, System.currentTimeMillis(), null));
-        _askOrders.add(new LimitOrder(1, Type.ASK, 200, 2500, System.currentTimeMillis(), null));
-        _askOrders.add(new LimitOrder(2, Type.ASK, 600, 2200, System.currentTimeMillis(), null));
-        _askOrders.add(new LimitOrder(3, Type.ASK, 100, 8000, System.currentTimeMillis(), null));
+
     }
 
     public static String Info(PriorityQueue<Order> orderQueue)
@@ -242,5 +242,34 @@ public class OrderBook
     {
 
         return null;
+    }
+
+    public static SimpleResponse TryCancelOrder(CancelOrderRequest request, User user)
+    {
+        synchronized (_askOrders)
+        {
+            for (Order askOrder : _askOrders)
+            {
+                if (askOrder.GetID() != request.GetOrderID()) { continue; }
+                if (!askOrder.GetUser().GetUsername().equals(user.GetUsername())) { return CancelOrderRequest.ORDER_BELONG_TO_DIFFERENT_USER; }
+
+                _askOrders.remove(askOrder);
+                return CancelOrderRequest.OK;
+            }
+        }
+
+        synchronized (_bidOrders)
+        {
+            for (Order bidOrder : _bidOrders)
+            {
+                if (bidOrder.GetID() != request.GetOrderID()) { continue; }
+                if (!bidOrder.GetUser().GetUsername().equals(user.GetUsername())) { return CancelOrderRequest.ORDER_BELONG_TO_DIFFERENT_USER; }
+
+                _bidOrders.remove(bidOrder);
+                return CancelOrderRequest.OK;
+            }
+        }
+
+        return CancelOrderRequest.ORDER_DOES_NOT_EXISTS;
     }
 }

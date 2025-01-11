@@ -31,12 +31,6 @@ public class Main
         try { connection = new Connection(socket); }
         catch (IOException e) { System.err.printf("[ERROR] Unable to create connection: %s\n", e.getMessage()); return; }
 
-        String temp = "login Leo 1234";
-        RequestHandler.SendLogin(connection, temp.split(" "));
-
-        temp = "insertLimitOrder bid 800 2200";
-        RequestHandler.SendInsertLimitOrder(connection, temp.split(" "));
-
         // print the available options to the user
         PrintOptions();
         boolean isConnectionAlive = true;
