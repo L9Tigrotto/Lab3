@@ -1,10 +1,7 @@
 
 package Networking;
 
-import Messages.LoginRequest;
-import Messages.LogoutRequest;
-import Messages.RegisterRequest;
-import Messages.UpdateCredentialsRequest;
+import Messages.*;
 import com.google.gson.FormattingStyle;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -123,6 +120,10 @@ public abstract class Request
                 case "updateCredentials" -> request = UpdateCredentialsRequest.DeserializeContent(jsonReader);
                 case "login" -> request = LoginRequest.DeserializeContent(jsonReader);
                 case "logout" -> request = LogoutRequest.DeserializeContent(jsonReader);
+                case "insertMarketOrder" -> request = MarketOrderRequest.DeserializeContent(jsonReader);
+                case "insertLimitOrder" -> request = LimitOrderRequest.DeserializeContent(jsonReader);
+                case "insertStopOrder" -> request = StopOrderRequest.DeserializeContent(jsonReader);
+                case "cancelOrder" -> request = CancelOrderRequest.DeserializeContent(jsonReader);
                 default -> throw new IOException("Supposed to read a valid request name from JSON (got " + temp + ")");
             }
 

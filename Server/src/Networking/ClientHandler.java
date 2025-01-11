@@ -61,10 +61,10 @@ public class ClientHandler implements Runnable
                     case "updateCredentials" -> HandleUpdateCredentialRequest((UpdateCredentialsRequest) request);
                     case "login" -> HandleLoginRequest((LoginRequest) request);
                     case "logout" -> HandleLogoutRequest((LogoutRequest) request);
-                    case "insertLimitOrder" -> HandleInsertLimitOrderRequest(request);
-                    case "insertMarketOrder" -> HandleInsertMarketOrderRequest(request);
-                    case "insertStopOrder" -> HandleInsertStopOrderRequest(request);
-                    case "cancelOrder" -> HandleCancelOrderRequest(request);
+                    case "insertMarketOrder" -> HandleInsertMarketOrderRequest((MarketOrderRequest) request);
+                    case "insertLimitOrder" -> HandleInsertLimitOrderRequest((LimitOrderRequest) request);
+                    case "insertStopOrder" -> HandleInsertStopOrderRequest((StopOrderRequest) request);
+                    case "cancelOrder" -> HandleCancelOrderRequest((CancelOrderRequest) request);
                     case "getPriceHistory" -> HandleGetPriceHistoryRequest(request);
                     default ->
                     {
@@ -257,22 +257,22 @@ public class ClientHandler implements Runnable
         SendResponse(response);
     }
 
-    private void HandleInsertLimitOrderRequest(Request request) throws IOException
+    private void HandleInsertMarketOrderRequest(MarketOrderRequest request) throws IOException
     {
 
     }
 
-    private void HandleInsertMarketOrderRequest(Request request) throws IOException
+    private void HandleInsertLimitOrderRequest(LimitOrderRequest request) throws IOException
     {
 
     }
 
-    private void HandleInsertStopOrderRequest(Request request) throws IOException
+    private void HandleInsertStopOrderRequest(StopOrderRequest request) throws IOException
     {
 
     }
 
-    private void HandleCancelOrderRequest(Request request) throws IOException
+    private void HandleCancelOrderRequest(CancelOrderRequest request) throws IOException
     {
 
     }
