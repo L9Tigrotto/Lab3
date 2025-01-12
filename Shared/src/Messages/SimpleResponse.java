@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Helpers.Utilities;
 import Networking.Response;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -64,11 +65,7 @@ public class SimpleResponse extends Response
     {
         // read the response code directly
         int response = jsonReader.nextInt();
-
-        // read the "errorMessage" field
-        String temp = jsonReader.nextName();
-        if (!temp.equals("errorMessage")) { throw new IOException("Supposed to read 'errorMessage' from JSON (got " + temp + ")"); }
-        String errorMessage = jsonReader.nextString();
+        String errorMessage = Utilities.ReadString(jsonReader, "errorMessage");
 
         return new SimpleResponse(response, errorMessage);
     }

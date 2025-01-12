@@ -15,6 +15,6 @@ public class MarketOrder extends Order
 
     public static MarketOrder FromRequest(long orderID, MarketOrderRequest request, User user)
     {
-        return new MarketOrder(orderID, request.GetType(), request.GetSize(), user);
+        return new MarketOrder(orderID, request.GetMethod(), request.GetSize(), user);
     }
 }

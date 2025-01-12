@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Helpers.Utilities;
 import Networking.OperationType;
 import Networking.Request;
 import Orders.Method;
@@ -11,37 +12,29 @@ import java.io.IOException;
 
 public class MarketOrderRequest extends Request
 {
-    private final Method _type;
+    private final Method _method;
     private final long _size;
 
-    public MarketOrderRequest(Method type, long size)
+    public MarketOrderRequest(Method method, long size)
     {
         super(OperationType.INSERT_MARKET_ORDER);
-        _type = type;
+        _method = method;
         _size = size;
     }
 
-    public Method GetType() { return _type; }
+    public Method GetMethod() { return _method; }
     public long GetSize() { return _size; }
 
     protected void SerializeContent(JsonWriter jsonWriter) throws IOException
     {
-        jsonWriter.name("type").value(_type.ToString());
+        jsonWriter.name("type").value(_method.ToString());
         jsonWriter.name("size").value(_size);
     }
 
     public static MarketOrderRequest DeserializeContent(JsonReader jsonReader) throws IOException
     {
-        // read the "type" field
-        String temp = jsonReader.nextName();
-        if (!temp.equals("type")) { throw new IOException("Supposed to read 'type' from JSON (got " + temp + ")"); }
-        Method method = Method.FromString(jsonReader.nextString());
-        if (method == null) { throw new IOException("Invalid type from JSON (got " + temp + ")"); }
-
-        // read the "size" field
-        temp = jsonReader.nextName();
-        if (!temp.equals("size")) { throw new IOException("Supposed to read 'size' from JSON (got " + temp + ")"); }
-        long size = jsonReader.nextLong();
+        Method method = Method.FromString(Utilities.ReadString(jsonReader, "type"));
+        long size = Utilities.ReadLong(jsonReader, "size");
 
         return new MarketOrderRequest(method, size);
     }

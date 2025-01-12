@@ -12,6 +12,6 @@ public class LimitOrder extends Order
 
     public static LimitOrder FromRequest(long orderID, LimitOrderRequest request, User user)
     {
-        return new LimitOrder(orderID, request.GetType(), request.GetSize(), request.GetLimitPrice(), user);
+        return new LimitOrder(orderID, request.GetMethod(), request.GetSize(), request.GetLimitPrice(), user);
     }
 }

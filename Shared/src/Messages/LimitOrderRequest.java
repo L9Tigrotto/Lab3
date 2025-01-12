@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Helpers.Utilities;
 import Networking.OperationType;
 import Networking.Request;
 import Orders.Method;
@@ -23,7 +24,7 @@ public class LimitOrderRequest extends Request
         _limitPrice = limitPrice;
     }
 
-    public Method GetType() { return _method; }
+    public Method GetMethod() { return _method; }
     public long GetSize() { return _size; }
     public long GetLimitPrice() { return _limitPrice; }
 
@@ -36,22 +37,10 @@ public class LimitOrderRequest extends Request
 
     public static LimitOrderRequest DeserializeContent(JsonReader jsonReader) throws IOException
     {
-        // read the "type" field
-        String temp = jsonReader.nextName();
-        if (!temp.equals("type")) { throw new IOException("Supposed to read 'type' from JSON (got " + temp + ")"); }
-        Method type = Method.FromString(jsonReader.nextString());
-        if (type == null) { throw new IOException("Invalid type from JSON (got " + temp + ")"); }
+        Method method = Method.FromString(Utilities.ReadString(jsonReader, "type"));
+        long size = Utilities.ReadLong(jsonReader, "size");
+        long price = Utilities.ReadLong(jsonReader, "price");
 
-        // read the "size" field
-        temp = jsonReader.nextName();
-        if (!temp.equals("size")) { throw new IOException("Supposed to read 'size' from JSON (got " + temp + ")"); }
-        long size = jsonReader.nextLong();
-
-        // read the "price" field
-        temp = jsonReader.nextName();
-        if (!temp.equals("price")) { throw new IOException("Supposed to read 'price' from JSON (got " + temp + ")"); }
-        long price = jsonReader.nextLong();
-
-        return new LimitOrderRequest(type, size, price);
+        return new LimitOrderRequest(method, size, price);
     }
 }

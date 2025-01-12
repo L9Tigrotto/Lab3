@@ -10,6 +10,6 @@ public class StopOrder extends Order
 
     public static StopOrder FromRequest(long orderID, StopOrderRequest request, User user)
     {
-        return new StopOrder(orderID, request.GetType(), request.GetSize(), request.GetStopPrice(), user);
+        return new StopOrder(orderID, request.GetMethod(), request.GetSize(), request.GetStopPrice(), user);
     }
 }

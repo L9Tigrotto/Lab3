@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Helpers.Utilities;
 import Networking.OperationType;
 import Networking.Request;
 import com.google.gson.stream.JsonReader;
@@ -41,11 +42,7 @@ public class CancelOrderRequest extends Request
 
     public static CancelOrderRequest DeserializeContent(JsonReader jsonReader) throws IOException
     {
-        // read the "orderID" field
-        String temp = jsonReader.nextName();
-        if (!temp.equals("orderID")) { throw new IOException("Supposed to read 'orderID' from JSON (got " + temp + ")"); }
-        long orderID = jsonReader.nextLong();
-
+        long orderID = Utilities.ReadLong(jsonReader, "orderID");
         return new CancelOrderRequest(orderID);
     }
 }

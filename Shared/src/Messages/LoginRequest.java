@@ -1,6 +1,7 @@
 
 package Messages;
 
+import Helpers.Utilities;
 import Networking.OperationType;
 import Networking.Request;
 import com.google.gson.stream.JsonReader;
@@ -37,15 +38,8 @@ public class LoginRequest extends Request
 
     public static LoginRequest DeserializeContent(JsonReader jsonReader) throws IOException
     {
-        // read the "username" field
-        String temp = jsonReader.nextName();
-        if (!temp.equals("username")) { throw new IOException("Supposed to read 'username' from JSON (got " + temp + ")"); }
-        String username = jsonReader.nextString();
-
-        // read the "password" field
-        temp = jsonReader.nextName();
-        if (!temp.equals("password")) { throw new IOException("Supposed to read 'password' from JSON (got " + temp + ")"); }
-        String password = jsonReader.nextString();
+        String username = Utilities.ReadString(jsonReader, "username");
+        String password = Utilities.ReadString(jsonReader, "password");
 
         return new LoginRequest(username, password);
     }
