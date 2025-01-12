@@ -1,6 +1,8 @@
 
 package Helpers;
 
+import com.google.gson.stream.JsonReader;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -55,5 +57,26 @@ public class Utilities
 
         if (socket == null) { throw new SocketException(); }
         return socket;
+    }
+
+    public static String ReadString(JsonReader reader, String expectedPropertyName) throws IOException
+    {
+        String temp = reader.nextName();
+        if (!temp.equalsIgnoreCase(expectedPropertyName)) { throw new IOException("Supposed to read '" + expectedPropertyName + "' from JSON (got " + temp + ")"); }
+        return reader.nextString();
+    }
+
+    public static int ReadInt(JsonReader reader, String expectedPropertyName) throws IOException
+    {
+        String temp = reader.nextName();
+        if (!temp.equalsIgnoreCase(expectedPropertyName)) { throw new IOException("Supposed to read '" + expectedPropertyName + "' from JSON (got " + temp + ")"); }
+        return reader.nextInt();
+    }
+
+    public static long ReadLong(JsonReader reader, String expectedPropertyName) throws IOException
+    {
+        String temp = reader.nextName();
+        if (!temp.equalsIgnoreCase(expectedPropertyName)) { throw new IOException("Supposed to read '" + expectedPropertyName + "' from JSON (got " + temp + ")"); }
+        return reader.nextLong();
     }
 }
