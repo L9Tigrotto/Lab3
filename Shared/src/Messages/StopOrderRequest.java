@@ -3,7 +3,7 @@ package Messages;
 
 import Networking.OperationType;
 import Networking.Request;
-import Orders.Type;
+import Orders.Method;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -11,18 +11,18 @@ import java.io.IOException;
 
 public class StopOrderRequest extends Request
 {
-    private final Type _type;
+    private final Method _type;
     private final long _size;
     private final long _stopPrice;
 
-    public StopOrderRequest(Type type, long size, long stopPrice) {
+    public StopOrderRequest(Method type, long size, long stopPrice) {
         super(OperationType.INSERT_STOP_ORDER);
         _type = type;
         _size = size;
         _stopPrice = stopPrice;
     }
 
-    public Type GetType() { return _type; }
+    public Method GetType() { return _type; }
     public long GetSize() { return _size; }
     public long GetStopPrice() { return _stopPrice; }
 
@@ -36,7 +36,7 @@ public class StopOrderRequest extends Request
         // read the "type" field
         String temp = jsonReader.nextName();
         if (!temp.equals("type")) { throw new IOException("Supposed to read 'type' from JSON (got " + temp + ")"); }
-        Type type = Type.FromString(jsonReader.nextString());
+        Method type = Method.FromString(jsonReader.nextString());
         if (type == null) { throw new IOException("Invalid type from JSON (got " + temp + ")"); }
 
         // read the "size" field

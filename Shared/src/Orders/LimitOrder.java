@@ -6,10 +6,7 @@ import Users.User;
 
 public class LimitOrder extends Order
 {
-    public LimitOrder(long id, Type type, long size, long limit, User user)
-    {
-        super(id, type, size, limit, user);
-    }
+    public LimitOrder(long id, Method method, long size, long limit, User user) { super(id, Type.LIMIT, method, size, limit, user); }
 
     public long GetLimitPrice() { return GetPrice(); }
 

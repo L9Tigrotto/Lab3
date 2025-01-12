@@ -2,27 +2,29 @@ package Orders;
 
 public enum Type
 {
-    BID(0),
-    ASK(1);
+    MARKET(0),
+    LIMIT(1),
+    STOP(2);
 
     private final int _value;
-    Type (int value) { _value = value; }
+    Type(int value) { _value = value; }
 
     public String ToString()
     {
         return switch (this)
         {
-            case BID -> "bid";
-            case ASK -> "ask";
-            default -> "unknown";
+            case MARKET -> "market";
+            case LIMIT -> "limit";
+            case STOP -> "stop";
         };
     }
 
     public static Type FromString(String text)
     {
         return switch (text) {
-            case "bid" -> BID;
-            case "ask" -> ASK;
+            case "market" -> MARKET;
+            case "limit" -> LIMIT;
+            case "stop" -> STOP;
             default -> null;
         };
     }

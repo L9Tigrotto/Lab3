@@ -6,16 +6,18 @@ import Users.User;
 public abstract class Order
 {
     private final long _id;
-    private final Type _type;
+    public final Type _type;
+    private final Method _method;
     private long _size;
     private final long _price;
     private final long _timestamp;
     private final User _user;
 
-    public Order(long id, Type type, long size, long price, User user)
+    public Order(long id, Type type, Method method, long size, long price, User user)
     {
         _id = id;
         _type = type;
+        _method = method;
         _size = size;
         _price = price;
         _timestamp = System.currentTimeMillis();
@@ -24,6 +26,7 @@ public abstract class Order
 
     public long GetID() { return _id; }
     public Type GetType() { return _type; }
+    public Method GetMethod() { return _method; }
     public long GetSize() { return _size; }
     public long GetPrice() { return _price; }
     public long GetTimestamp() { return _timestamp; }
@@ -31,12 +34,12 @@ public abstract class Order
 
     public boolean IsConsumed() { return _size == 0; }
 
-    public void ChangeSize(long size) { _size -= size; }
+    private void DecreaseSize(long size) { _size -= size; }
 
     public long CanSellTo(Order order)
     {
-        if (GetType() != Type.ASK) { return 0; }
-        if (order.GetType() != Type.BID) { return 0; }
+        if (GetMethod() != Method.ASK) { return 0; }
+        if (order.GetMethod() != Method.BID) { return 0; }
         if (GetPrice() > order.GetPrice()) { return 0; }
 
         return Math.min(GetSize(), order.GetSize());
@@ -44,8 +47,8 @@ public abstract class Order
 
     public long CanBuyFrom(Order order)
     {
-        if (GetType() != Type.BID) { return 0; }
-        if (order.GetType() != Type.ASK) { return 0; }
+        if (GetMethod() != Method.BID) { return 0; }
+        if (order.GetMethod() != Method.ASK) { return 0; }
         if (GetPrice() < order.GetPrice()) { return 0; }
 
         return Math.min(GetSize(), order.GetSize());
@@ -56,8 +59,11 @@ public abstract class Order
         long amount = CanSellTo(order);
         if (amount == 0) { return false; }
 
-        ChangeSize(amount);
-        order.ChangeSize(amount);
+        DecreaseSize(amount);
+        order.DecreaseSize(amount);
+
+        //HistoryRecord historyRecord = new HistoryRecord(this, )
+
         return true;
     }
 
@@ -66,8 +72,8 @@ public abstract class Order
         long amount = CanBuyFrom(order);
         if (amount == 0) { return false; }
 
-        ChangeSize(amount);
-        order.ChangeSize(amount);
+        DecreaseSize(amount);
+        order.DecreaseSize(amount);
         return true;
     }
 

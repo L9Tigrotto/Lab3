@@ -3,7 +3,7 @@ package Messages;
 
 import Networking.OperationType;
 import Networking.Request;
-import Orders.Type;
+import Orders.Method;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -11,17 +11,17 @@ import java.io.IOException;
 
 public class MarketOrderRequest extends Request
 {
-    private final Type _type;
+    private final Method _type;
     private final long _size;
 
-    public MarketOrderRequest(Type type, long size)
+    public MarketOrderRequest(Method type, long size)
     {
         super(OperationType.INSERT_MARKET_ORDER);
         _type = type;
         _size = size;
     }
 
-    public Type GetType() { return _type; }
+    public Method GetType() { return _type; }
     public long GetSize() { return _size; }
 
     protected void SerializeContent(JsonWriter jsonWriter) throws IOException
@@ -35,7 +35,7 @@ public class MarketOrderRequest extends Request
         // read the "type" field
         String temp = jsonReader.nextName();
         if (!temp.equals("type")) { throw new IOException("Supposed to read 'type' from JSON (got " + temp + ")"); }
-        Type type = Type.FromString(jsonReader.nextString());
+        Method type = Method.FromString(jsonReader.nextString());
         if (type == null) { throw new IOException("Invalid type from JSON (got " + temp + ")"); }
 
         // read the "size" field

@@ -2,8 +2,7 @@
 package Networking;
 
 import Messages.*;
-import Orders.MarketOrder;
-import Orders.Type;
+import Orders.Method;
 import Users.User;
 
 import java.io.IOException;
@@ -220,7 +219,7 @@ public class RequestHandler
         }
 
         // validate the order type (bid or ask)
-        Type type = Type.FromString(words[1]);
+        Method type = Method.FromString(words[1]);
         if (type == null)
         {
             System.out.println("[ERROR] <type> must be one of: bid, ask");
@@ -265,7 +264,7 @@ public class RequestHandler
         }
 
         // validate the order type (bid or ask)
-        Type type = Type.FromString(words[1]);
+        Method type = Method.FromString(words[1]);
         if (type == null)
         {
             System.out.println("[ERROR] <type> must be one of: bid, ask");
@@ -317,7 +316,7 @@ public class RequestHandler
         }
 
         // validate the order type (bid or ask)
-        Type type = Type.FromString(words[1]);
+        Method type = Method.FromString(words[1]);
         if (type == null)
         {
             System.out.println("[ERROR] <type> must be one of: bid, ask");

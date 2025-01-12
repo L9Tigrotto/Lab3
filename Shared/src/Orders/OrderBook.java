@@ -98,7 +98,7 @@ public class OrderBook
         // create a cart object to track the execution of the market order
         Cart cart = order.CreateCart();
 
-        if (order.GetType() == Type.ASK)
+        if (order.GetMethod() == Method.ASK)
         {
             // synchronize access to the bid order list to prevent race conditions
             synchronized (_bidOrders)
@@ -119,7 +119,7 @@ public class OrderBook
             }
         }
 
-        if (order.GetType() == Type.BID)
+        if (order.GetMethod() == Method.BID)
         {
             // synchronize access to the ask order list to prevent race conditions
             synchronized (_askOrders)
@@ -139,7 +139,7 @@ public class OrderBook
 
         // return success if the market order is consumed, otherwise return failure
         if (cart.IsOrderConsumed()) { return new OrderResponse(order.GetID()); }
-        else { return new OrderResponse(-1); }
+        else { return OrderResponse.INVALID; }
     }
 
     /**
@@ -150,7 +150,7 @@ public class OrderBook
      */
     public static OrderResponse ProcessOrder(LimitOrder order)
     {
-        if (order.GetType() == Type.ASK)
+        if (order.GetMethod() == Method.ASK)
         {
             // synchronize access to the bid order list to prevent race conditions
             synchronized (_bidOrders)
@@ -175,7 +175,7 @@ public class OrderBook
             }
         }
 
-        if (order.GetType() == Type.BID)
+        if (order.GetMethod() == Method.BID)
         {
             // synchronize access to the ask order list to prevent race conditions
             synchronized (_askOrders)

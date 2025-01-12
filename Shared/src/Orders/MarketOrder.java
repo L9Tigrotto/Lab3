@@ -6,9 +6,9 @@ import Users.User;
 
 public class MarketOrder extends Order
 {
-    public MarketOrder(long id, Type type, long size, User user)
+    public MarketOrder(long id, Method method, long size, User user)
     {
-        super(id, type, size, 0, user);
+        super(id, Type.MARKET, method, size, 0, user);
     }
 
     public Cart CreateCart() { return new Cart(this); }
