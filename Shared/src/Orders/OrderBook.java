@@ -62,58 +62,29 @@ public class OrderBook
         }
     }
 
-    static
+    private static void AppendInfo(StringBuilder status, PriorityQueue<Order> orderQueue)
     {
+        status.append(String.format("%10s%10s%10s\n", "Price", "Size", "Total"));
 
-    }
-
-    public static String Info(PriorityQueue<Order> orderQueue)
-    {
-        StringBuilder info = new StringBuilder();
-        info.append(String.format("%10s%10s%10s\n", "Price", "Size", "Total"));
-
-        if(orderQueue.isEmpty())
-            return info.toString();
-
-        PriorityQueue<Order> orders = new PriorityQueue<>(orderQueue);
-        Order order = orders.poll();
-
-        long price = order.GetPrice();
-        long size = order.GetSize();
-
-        while(!orders.isEmpty())
+        for (Order order : orderQueue)
         {
-            order = orders.poll();
-            if(order.GetPrice() == price)
-            {
-                size += order.GetSize();
-            }
-            else
-            {
-                info.append(String.format("%10d%10d%10d\n", price, size, price * size));
-
-                price = order.GetPrice();
-                size = order.GetSize();
-            }
+            status.append(String.format("%10d%10d%10d\n", order.GetPrice(), order.GetSize(), order.GetPrice() * order.GetSize()));
         }
-
-        info.append(String.format("%10d%10d%10d\n", price, size, price * size));
-        return info.toString();
     }
 
-    public static String GetStatus()
+    public static String PrintStatus()
     {
-        String status = "";
-        status += String.format("%20s\n", "Ask Side");
+        StringBuilder status = new StringBuilder();
 
-        status += Info(_askOrders);
+        status.append(String.format("%20s\n", "Ask Side"));
+        synchronized (_askOrders) { AppendInfo(status, _askOrders); }
 
-        status += "-------------------------------------\n";
+        status.append("-------------------------------------\n");
 
-        status += String.format("%20s\n", "Bid Side");
-        status += Info(_bidOrders);
+        status.append(String.format("%20s\n", "Bid Sid"));
+        synchronized (_bidOrders) { AppendInfo(status, _bidOrders); }
 
-        return status;
+        return status.toString();
     }
 
     /**

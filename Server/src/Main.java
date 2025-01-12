@@ -28,7 +28,7 @@ public class Main
                 if (input.equalsIgnoreCase("stop")) { break; }
                 if (input.equalsIgnoreCase("status"))
                 {
-                    System.out.println(OrderBook.GetStatus());
+                    System.out.println(OrderBook.PrintStatus());
                 }
             }
         }
