@@ -35,16 +35,14 @@ public class MarketOrderRequest extends Request
         // read the "type" field
         String temp = jsonReader.nextName();
         if (!temp.equals("type")) { throw new IOException("Supposed to read 'type' from JSON (got " + temp + ")"); }
-        Method type = Method.FromString(jsonReader.nextString());
-        if (type == null) { throw new IOException("Invalid type from JSON (got " + temp + ")"); }
+        Method method = Method.FromString(jsonReader.nextString());
+        if (method == null) { throw new IOException("Invalid type from JSON (got " + temp + ")"); }
 
         // read the "size" field
         temp = jsonReader.nextName();
         if (!temp.equals("size")) { throw new IOException("Supposed to read 'size' from JSON (got " + temp + ")"); }
-        long size;
-        try { size = Long.parseLong(jsonReader.nextString()); }
-        catch (NumberFormatException e) { throw new IOException("Invalid size from JSON (got " + temp + ")"); }
+        long size = jsonReader.nextLong();
 
-        return new MarketOrderRequest(type, size);
+        return new MarketOrderRequest(method, size);
     }
 }

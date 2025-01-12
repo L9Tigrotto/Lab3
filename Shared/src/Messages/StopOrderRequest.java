@@ -42,16 +42,12 @@ public class StopOrderRequest extends Request
         // read the "size" field
         temp = jsonReader.nextName();
         if (!temp.equals("size")) { throw new IOException("Supposed to read 'size' from JSON (got " + temp + ")"); }
-        long size;
-        try { size = Long.parseLong(jsonReader.nextString()); }
-        catch (NumberFormatException e) { throw new IOException("Invalid size from JSON (got " + temp + ")"); }
+        long size = jsonReader.nextLong();
 
         // read the "price" field
         temp = jsonReader.nextName();
         if (!temp.equals("price")) { throw new IOException("Supposed to read 'price' from JSON (got " + temp + ")"); }
-        long price;
-        try { price = Long.parseLong(jsonReader.nextString()); }
-        catch (NumberFormatException e) { throw new IOException("Invalid price from JSON (got " + temp + ")"); }
+        long price= jsonReader.nextLong();
 
         return new StopOrderRequest(type, size, price);
     }

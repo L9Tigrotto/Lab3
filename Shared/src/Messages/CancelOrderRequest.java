@@ -44,9 +44,7 @@ public class CancelOrderRequest extends Request
         // read the "orderID" field
         String temp = jsonReader.nextName();
         if (!temp.equals("orderID")) { throw new IOException("Supposed to read 'orderID' from JSON (got " + temp + ")"); }
-        long orderID;
-        try { orderID = Long.parseLong(jsonReader.nextString()); }
-        catch (NumberFormatException e) { throw new IOException("Invalid orderID from JSON (got " + temp + ")"); }
+        long orderID = jsonReader.nextLong();
 
         return new CancelOrderRequest(orderID);
     }
