@@ -127,32 +127,26 @@ public class GlobalData
 
     public static MarketOrder CreateMarketOrder(MarketOrderRequest request, User user)
     {
-        long id;
-        synchronized (SETTINGS) { id = SETTINGS.NextOrderID++; }
+        long orderID;
+        synchronized (SETTINGS) { orderID = SETTINGS.NextOrderID++; }
 
-        long time = System.currentTimeMillis();
-
-        return new MarketOrder(id, request.GetType(), request.GetSize(), time, user);
+        return MarketOrder.FromRequest(orderID, request, user);
     }
 
     public static LimitOrder CreateLimitOrder(LimitOrderRequest request, User user)
     {
-        long id;
-        synchronized (SETTINGS) { id = SETTINGS.NextOrderID++; }
+        long orderID;
+        synchronized (SETTINGS) { orderID = SETTINGS.NextOrderID++; }
 
-        long time = System.currentTimeMillis();
-
-        return new LimitOrder(id, request.GetType(), request.GetSize(), request.GetLimitPrice(), time, user);
+        return LimitOrder.FromRequest(orderID, request, user);
     }
 
     public static StopOrder CreateStopOrder(StopOrderRequest request, User user)
     {
-        long id;
-        synchronized (SETTINGS) { id = SETTINGS.NextOrderID++; }
+        long orderID;
+        synchronized (SETTINGS) { orderID = SETTINGS.NextOrderID++; }
 
-        long time = System.currentTimeMillis();
-
-        return new StopOrder(id, request.GetType(), request.GetSize(), request.GetPrice(), time, user);
+        return StopOrder.FromRequest(orderID, request, user);
     }
 
     /**

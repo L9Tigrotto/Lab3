@@ -9,16 +9,16 @@ public abstract class Order
     private final Type _type;
     private long _size;
     private final long _price;
-    private final long _time;
+    private final long _timestamp;
     private final User _user;
 
-    public Order(long id, Type type, long size, long price, long time, User user)
+    public Order(long id, Type type, long size, long price, User user)
     {
         _id = id;
         _type = type;
         _size = size;
         _price = price;
-        _time = time;
+        _timestamp = System.currentTimeMillis();
         _user = user;
     }
 
@@ -26,7 +26,7 @@ public abstract class Order
     public Type GetType() { return _type; }
     public long GetSize() { return _size; }
     public long GetPrice() { return _price; }
-    public long GetTime() { return _time; }
+    public long GetTimestamp() { return _timestamp; }
     public User GetUser() { return _user; }
 
     public boolean IsConsumed() { return _size == 0; }
