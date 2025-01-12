@@ -6,6 +6,7 @@ import com.google.gson.stream.JsonReader;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Calendar;
 
 /**
  * This class provides utility functions.
@@ -78,5 +79,26 @@ public class Utilities
         String temp = reader.nextName();
         if (!temp.equalsIgnoreCase(expectedPropertyName)) { throw new IOException("Supposed to read '" + expectedPropertyName + "' from JSON (got " + temp + ")"); }
         return reader.nextLong();
+    }
+
+    public static int GetYearFromMillis(long millis)
+    {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(millis);
+        return calendar.get(Calendar.YEAR);
+    }
+
+    public static int GetMonthFromMillis(long millis)
+    {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(millis);
+        return calendar.get(Calendar.MONTH);
+    }
+
+    public static int GetDayOfTheMonthFromMillis(long millis)
+    {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(millis);
+        return calendar.get(Calendar.DAY_OF_MONTH);
     }
 }

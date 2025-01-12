@@ -27,7 +27,7 @@ public class GlobalData
     // the filename of the server configuration file
     private static final String CONFIG_FILENAME = "server.properties";
     private static final String USERS_FILENAME = "users.json";
-    private static final String ORDER_HISTORY_FILENAME=  "orderHistory.json";
+    private static final String ORDER_HISTORY_FILENAME=  "storicoOrdini.json";
 
     // the server settings object, loaded from the configuration file
     public static final ServerSettings SETTINGS;
@@ -56,6 +56,19 @@ public class GlobalData
     // ]
     public static final TreeSet<Tuple<Long, TreeSet<Tuple<Long, HistoryRecord>>>> ORDER_HISTORY;
 
+    private static TreeSet<Tuple<Long, HistoryRecord>> CreateSecondLevelOrderHistory()
+    {
+        return new TreeSet<>(
+                (tuple1, tuple2) ->
+                {
+                    int day1 = Utilities.GetDayOfTheMonthFromMillis(tuple1.GetX());
+                    int day2 = Utilities.GetDayOfTheMonthFromMillis(tuple2.GetX());
+
+                    return Integer.compare(day1, day2);
+                }
+        );
+    }
+
     // static initializer block to data settings and users at startup
     static
     {
@@ -73,15 +86,11 @@ public class GlobalData
         ORDER_HISTORY = new TreeSet<>(
                 (tuple1, tuple2) ->
                 {
-                    Calendar cal = Calendar.getInstance();
+                    int year1 = Utilities.GetYearFromMillis(tuple1.GetX());
+                    int month1 = Utilities.GetMonthFromMillis(tuple1.GetX());
 
-                    cal.setTimeInMillis(tuple1.GetX());
-                    int month1 = cal.get(Calendar.MONTH);
-                    int year1 = cal.get(Calendar.YEAR);
-
-                    cal.setTimeInMillis(tuple2.GetX());
-                    int month2 = cal.get(Calendar.MONTH);
-                    int year2 = cal.get(Calendar.YEAR);
+                    int year2 = Utilities.GetYearFromMillis(tuple2.GetX());
+                    int month2 = Utilities.GetMonthFromMillis(tuple2.GetX());
 
                     int comp = Integer.compare(year1, year2);
                     if (comp == 0) { comp = Integer.compare(month1, month2); }
@@ -89,6 +98,7 @@ public class GlobalData
                 }
         );
 
+        long lastUsedID = Long.MIN_VALUE;
         if (orderHistoryFile.exists())
         {
             try (FileReader fileReader = new FileReader(orderHistoryFile);
@@ -108,7 +118,7 @@ public class GlobalData
                     Type type = Type.FromString(Utilities.ReadString(jsonReader, "orderType"));
                     long size = Utilities.ReadLong(jsonReader, "size");
                     long price = Utilities.ReadLong(jsonReader, "price");
-                    long timestamp = Utilities.ReadLong(jsonReader, "timestamp");
+                    long timestamp = Utilities.ReadLong(jsonReader, "timestamp") * 1000;
 
                     // check if te current month/year exists in the list
                     Tuple<Long, TreeSet<Tuple<Long, HistoryRecord>>> dummy = new Tuple<>(timestamp, null);
@@ -131,6 +141,8 @@ public class GlobalData
                     Tuple<Long, HistoryRecord> tuple = new Tuple<>(timestamp, historyRecord);
                     secondLevelTuple.add(tuple);
 
+                    if (lastUsedID < orderID) { lastUsedID = orderID; }
+
                     jsonReader.endObject();
                 }
 
@@ -139,6 +151,8 @@ public class GlobalData
             }
             catch (IOException e) { System.out.printf("[ERROR] Unable to load orderHistory file: %s\n", e.getMessage()); }
         }
+
+        if (SETTINGS.NextOrderID <= lastUsedID) { SETTINGS.NextOrderID = lastUsedID + 1; }
 
 
         File usersFile = new File(USERS_FILENAME);
@@ -169,24 +183,6 @@ public class GlobalData
             }
             catch (IOException e) { System.out.printf("[ERROR] Unable to load users file: %s\n", e.getMessage()); }
         }
-    }
-
-    private static TreeSet<Tuple<Long, HistoryRecord>> CreateSecondLevelOrderHistory()
-    {
-        return new TreeSet<>(
-                (tuple1, tuple2) ->
-                {
-                    Calendar cal = Calendar.getInstance();
-
-                    cal.setTimeInMillis(tuple1.GetX());
-                    int day1 = cal.get(Calendar.DAY_OF_MONTH);
-
-                    cal.setTimeInMillis(tuple2.GetX());
-                    int day2 = cal.get(Calendar.DAY_OF_MONTH);
-
-                    return Integer.compare(day1, day2);
-                }
-        );
     }
 
     /**
