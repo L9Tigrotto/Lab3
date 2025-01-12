@@ -3,9 +3,7 @@ package Helpers;
 
 import Messages.*;
 import Networking.Listener;
-import Orders.LimitOrder;
-import Orders.MarketOrder;
-import Orders.StopOrder;
+import Orders.*;
 import Users.User;
 import Users.UserNotRegisteredException;
 import com.google.gson.FormattingStyle;
@@ -17,8 +15,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,7 +26,8 @@ public class GlobalData
 {
     // the filename of the server configuration file
     private static final String CONFIG_FILENAME = "server.properties";
-    private static final String USERS_FILENAME= "users.json";
+    private static final String USERS_FILENAME = "users.json";
+    private static final String ORDER_HISTORY_FILENAME=  "orderHistory.json";
 
     // the server settings object, loaded from the configuration file
     public static final ServerSettings SETTINGS;
@@ -38,7 +36,25 @@ public class GlobalData
     public static final Listener LISTENER;
 
     // a concurrent hash map to store registered users (username as key, User object as value)
-    public static final ConcurrentHashMap<String, User> USERS = new ConcurrentHashMap<String, User>();
+    public static final ConcurrentHashMap<String, User> USERS;
+
+    // first level list ordered by year and month
+    // second level list ordered by day
+    // [
+    //      2021/01 : [
+    //          { price history 1 },
+    //          { price history 2 },
+    //          ...
+    //      ],
+    //      ...
+    //      2021/03 : [
+    //          { price history 1 },
+    //          { price history 2 },
+    //      ...
+    //      ],
+    //      ...
+    // ]
+    public static final TreeSet<Tuple<Long, TreeSet<Tuple<Long, HistoryRecord>>>> ORDER_HISTORY;
 
     // static initializer block to data settings and users at startup
     static
@@ -50,11 +66,87 @@ public class GlobalData
             throw new RuntimeException(e);
         }
 
-        File file = new File(USERS_FILENAME);
 
-        if (file.exists())
+        LISTENER = new Listener();
+
+        File orderHistoryFile = new File(ORDER_HISTORY_FILENAME);
+        ORDER_HISTORY = new TreeSet<>(
+                (tuple1, tuple2) ->
+                {
+                    Calendar cal = Calendar.getInstance();
+
+                    cal.setTimeInMillis(tuple1.GetX());
+                    int month1 = cal.get(Calendar.MONTH);
+                    int year1 = cal.get(Calendar.YEAR);
+
+                    cal.setTimeInMillis(tuple2.GetX());
+                    int month2 = cal.get(Calendar.MONTH);
+                    int year2 = cal.get(Calendar.YEAR);
+
+                    int comp = Integer.compare(year1, year2);
+                    if (comp == 0) { comp = Integer.compare(month1, month2); }
+                    return comp;
+                }
+        );
+
+        if (orderHistoryFile.exists())
         {
-            try(FileReader fileReader = new FileReader(file);
+            try (FileReader fileReader = new FileReader(orderHistoryFile);
+                JsonReader jsonReader = new JsonReader(fileReader))
+            {
+                jsonReader.beginObject();
+
+                if (!jsonReader.nextName().equals("trades")) { throw new JsonIOException(""); }
+                jsonReader.beginArray();
+
+                while (jsonReader.hasNext())
+                {
+                    jsonReader.beginObject();
+
+                    long orderID = Utilities.ReadLong(jsonReader, "orderID");
+                    Method method = Method.FromString(Utilities.ReadString(jsonReader, "type"));
+                    Type type = Type.FromString(Utilities.ReadString(jsonReader, "orderType"));
+                    long size = Utilities.ReadLong(jsonReader, "size");
+                    long price = Utilities.ReadLong(jsonReader, "price");
+                    long timestamp = Utilities.ReadLong(jsonReader, "timestamp");
+
+                    // check if te current month/year exists in the list
+                    Tuple<Long, TreeSet<Tuple<Long, HistoryRecord>>> dummy = new Tuple<>(timestamp, null);
+                    Tuple<Long, TreeSet<Tuple<Long, HistoryRecord>>> firstLevelTuple;
+                    TreeSet<Tuple<Long, HistoryRecord>> secondLevelTuple;
+
+                    if (ORDER_HISTORY.contains(dummy))
+                    {
+                        firstLevelTuple = ORDER_HISTORY.ceiling(dummy);
+                        secondLevelTuple = firstLevelTuple.GetY();
+                    }
+                    else
+                    {
+                        secondLevelTuple = CreateSecondLevelOrderHistory();
+                        firstLevelTuple = new Tuple<>(timestamp, secondLevelTuple);
+                        ORDER_HISTORY.add(firstLevelTuple);
+                    }
+
+                    HistoryRecord historyRecord = new HistoryRecord(orderID, method, type, size, price, timestamp);
+                    Tuple<Long, HistoryRecord> tuple = new Tuple<>(timestamp, historyRecord);
+                    secondLevelTuple.add(tuple);
+
+                    jsonReader.endObject();
+                }
+
+                jsonReader.endArray();
+                jsonReader.endObject();
+            }
+            catch (IOException e) { System.out.printf("[ERROR] Unable to load orderHistory file: %s\n", e.getMessage()); }
+        }
+
+
+        File usersFile = new File(USERS_FILENAME);
+        USERS = new ConcurrentHashMap<String, User>();
+
+        if (usersFile.exists())
+        {
+            try (FileReader fileReader = new FileReader(usersFile);
                 JsonReader jsonReader = new JsonReader(fileReader))
             {
                 jsonReader.beginArray();
@@ -63,11 +155,8 @@ public class GlobalData
                 {
                     jsonReader.beginObject();
 
-                    // ensure expected fields are present and named correctly
-                    if (!jsonReader.nextName().equals("name")) { throw new JsonIOException(""); }
-                    String name = jsonReader.nextString();
-                    if (!jsonReader.nextName().equals("password")) { throw new JsonIOException(""); }
-                    String password = jsonReader.nextString();
+                    String name = Utilities.ReadString(jsonReader, "name");
+                    String password = Utilities.ReadString(jsonReader, "password");
 
                     // avoid overriding duplicate users (shouldn't be any)
                     if (USERS.containsKey(name)) { continue; }
@@ -80,8 +169,24 @@ public class GlobalData
             }
             catch (IOException e) { System.out.printf("[ERROR] Unable to load users file: %s\n", e.getMessage()); }
         }
+    }
 
-        LISTENER = new Listener();
+    private static TreeSet<Tuple<Long, HistoryRecord>> CreateSecondLevelOrderHistory()
+    {
+        return new TreeSet<>(
+                (tuple1, tuple2) ->
+                {
+                    Calendar cal = Calendar.getInstance();
+
+                    cal.setTimeInMillis(tuple1.GetX());
+                    int day1 = cal.get(Calendar.DAY_OF_MONTH);
+
+                    cal.setTimeInMillis(tuple2.GetX());
+                    int day2 = cal.get(Calendar.DAY_OF_MONTH);
+
+                    return Integer.compare(day1, day2);
+                }
+        );
     }
 
     /**

@@ -62,7 +62,7 @@ public abstract class Order
         DecreaseSize(amount);
         order.DecreaseSize(amount);
 
-        //HistoryRecord historyRecord = new HistoryRecord(this, )
+        // HistoryRecord historyRecord = new HistoryRecord(this)
 
         return true;
     }
@@ -74,6 +74,9 @@ public abstract class Order
 
         DecreaseSize(amount);
         order.DecreaseSize(amount);
+
+        // HistoryRecord historyRecord = new HistoryRecord(this)
+
         return true;
     }
 
