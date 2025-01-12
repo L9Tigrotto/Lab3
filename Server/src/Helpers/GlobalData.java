@@ -190,7 +190,7 @@ public class GlobalData
     }
 
     /**
-     * Checks if a user with the given usernamename exists in the registered users map.
+     * Checks if a user with the given username exists in the registered users map.
      *
      * @param username The username to check.
      * @return True if the user exists, false otherwise.
