@@ -1,6 +1,8 @@
 
 package Orders;
 
+import Helpers.Tuple;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,31 +14,31 @@ public class Cart
 
     public Cart(MarketOrder order)
     {
-        _orders = new ArrayList<Order>();
+        _orders = new ArrayList<>();
         _order = order;
         _targetSize = order.GetSize();
     }
 
     public boolean TrySellTo(Order askOrder)
     {
-        long size = _order.CanSellTo(askOrder);
+        Tuple<Long, Long> size_price = _order.CanSellTo(askOrder);
 
-        if (size == 0) { return false; }
+        if (size_price.GetX() == 0) { return false; }
 
         _orders.add(askOrder);
-        _targetSize -= size;
+        _targetSize -= size_price.GetX();
 
         return _targetSize != 0;
     }
 
     public boolean TryBuyFrom(Order order)
     {
-        long size = _order.CanBuyFrom(order);
+        Tuple<Long, Long> size_price = _order.CanBuyFrom(order);
 
-        if (size == 0) { return false; }
+        if (size_price.GetX() == 0) { return false; }
 
         _orders.add(order);
-        _targetSize -= size;
+        _targetSize -= size_price.GetX();
 
         return _targetSize != 0;
     }

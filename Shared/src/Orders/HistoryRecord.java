@@ -1,6 +1,8 @@
 
 package Orders;
 
+import Helpers.Tuple;
+
 public class HistoryRecord
 {
     private final long _orderID;
@@ -20,13 +22,13 @@ public class HistoryRecord
         _timestamp = timestamp;
     }
 
-    public HistoryRecord(Order order, long size, long price)
+    public HistoryRecord(Order order, Tuple<Long, Long> size_price)
     {
         _orderID = order.GetID();
         _method = order.GetMethod();
         _type = order.GetType();
-        _size = size;
-        _price = price;
+        _size = size_price.GetX();
+        _price = size_price.GetY();
         _timestamp = System.currentTimeMillis();
     }
 

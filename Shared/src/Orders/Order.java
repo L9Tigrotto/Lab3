@@ -1,6 +1,7 @@
 
 package Orders;
 
+import Helpers.Tuple;
 import Users.User;
 
 public abstract class Order
@@ -36,49 +37,49 @@ public abstract class Order
 
     private void DecreaseSize(long size) { _size -= size; }
 
-    public long CanSellTo(Order order)
+    public Tuple<Long, Long> CanSellTo(Order order)
     {
-        if (GetMethod() != Method.ASK) { return 0; }
-        if (order.GetMethod() != Method.BID) { return 0; }
-        if (GetPrice() > order.GetPrice()) { return 0; }
+        if (GetMethod() != Method.ASK) { return new Tuple<>(0L, 0L); }
+        if (order.GetMethod() != Method.BID) { return new Tuple<>(0L, 0L); }
+        if (GetPrice() > order.GetPrice()) { return new Tuple<>(0L, 0L); }
 
-        return Math.min(GetSize(), order.GetSize());
+        return new Tuple<>(Math.min(GetSize(), order.GetSize()), GetPrice());
     }
 
-    public long CanBuyFrom(Order order)
+    public Tuple<Long, Long> CanBuyFrom(Order order)
     {
-        if (GetMethod() != Method.BID) { return 0; }
-        if (order.GetMethod() != Method.ASK) { return 0; }
-        if (GetPrice() < order.GetPrice()) { return 0; }
+        if (GetMethod() != Method.BID) { return new Tuple<>(0L, 0L); }
+        if (order.GetMethod() != Method.ASK) { return new Tuple<>(0L, 0L); }
+        if (GetPrice() < order.GetPrice()) { return new Tuple<>(0L, 0L); }
 
-        return Math.min(GetSize(), order.GetSize());
+        return new Tuple<>(Math.min(GetSize(), order.GetSize()), GetPrice());
     }
 
     public boolean TrySellTo(Order order)
     {
-        long amount = CanSellTo(order);
-        if (amount == 0) { return false; }
+        Tuple<Long, Long> size_price = CanSellTo(order);
+        if (size_price.GetX() == 0) { return false; }
 
-        DecreaseSize(amount);
-        order.DecreaseSize(amount);
+        DecreaseSize(size_price.GetX());
+        order.DecreaseSize(size_price.GetX());
 
-        // HistoryRecord historyRecord = new HistoryRecord(this)
+        HistoryRecord record = new HistoryRecord(this, size_price);
+        HistoryRecordCollection.Add(record);
 
         return true;
     }
 
     public boolean TryBuyFrom(Order order)
     {
-        long amount = CanBuyFrom(order);
-        if (amount == 0) { return false; }
+        Tuple<Long, Long> size_price = CanBuyFrom(order);
+        if (size_price.GetX() == 0) { return false; }
 
-        DecreaseSize(amount);
-        order.DecreaseSize(amount);
+        DecreaseSize(size_price.GetX());
+        order.DecreaseSize(size_price.GetX());
 
-        // HistoryRecord historyRecord = new HistoryRecord(this)
+        HistoryRecord record = new HistoryRecord(this, size_price);
+        HistoryRecordCollection.Add(record);
 
         return true;
     }
-
-    public boolean Equals(Order other) { return _id == other._id; }
 }
