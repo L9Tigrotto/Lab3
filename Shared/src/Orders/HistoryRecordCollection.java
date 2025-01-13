@@ -32,7 +32,7 @@ public class HistoryRecordCollection
 {
     private static final HistoryRecordCollection _instance = new HistoryRecordCollection();
 
-    private TreeSet<Tuple<Long, List<Tuple<Long, HistoryRecord>>>> _collection;
+    private final TreeSet<Tuple<Long, List<Tuple<Long, HistoryRecord>>>> _collection;
 
     private HistoryRecordCollection()
     {
@@ -115,10 +115,7 @@ public class HistoryRecordCollection
     private void SaveInternal(String filename) throws IOException
     {
         File orderHistoryFile = new File(filename);
-        if (!orderHistoryFile.exists())
-        {
-            return;
-        }
+        if (!orderHistoryFile.exists()) { return; }
 
         try (FileWriter fileWriter = new FileWriter(orderHistoryFile);
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
