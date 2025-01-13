@@ -403,7 +403,7 @@ public class RequestHandler
 
         String formattedTimestamp = String.format("%s%s", words[1], words[2]);
         long timestamp;
-        try { timestamp = Utilities.MillisFromString(formattedTimestamp, GetPriceHistoryRequest.DATE_FORMAT); }
+        try { timestamp = Utilities.MillisecondsFromString(formattedTimestamp, GetPriceHistoryRequest.DATE_FORMAT); }
         catch (ParseException e) { System.out.printf("[ERROR] Unable to parse '%s'\n", formattedTimestamp); return true; }
 
         GetPriceHistoryRequest request = new GetPriceHistoryRequest(timestamp);

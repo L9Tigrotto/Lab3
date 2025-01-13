@@ -26,19 +26,19 @@ public class GetPriceHistoryRequest extends Request
     }
 
     public long GetTimestamp() { return _timestamp; }
-    public int GetMonth() { return Utilities.GetMonthFromMillis(_timestamp); }
-    public int GetYear() { return Utilities.GetYearFromMillis(_timestamp); }
+    public int GetMonth() { return Utilities.GetMonthFromMilliseconds(_timestamp); }
+    public int GetYear() { return Utilities.GetYearFromMilliseconds(_timestamp); }
 
     protected void SerializeContent(JsonWriter jsonWriter) throws IOException
     {
-        String formattedTimestamp = Utilities.MillisToString(_timestamp, DATE_FORMAT);
+        String formattedTimestamp = Utilities.MillisecondsToString(_timestamp, DATE_FORMAT);
         jsonWriter.name("month").value(formattedTimestamp);
     }
 
     public static GetPriceHistoryRequest DeserializeContent(JsonReader jsonReader) throws IOException, ParseException
     {
         String formattedTimestamp = Utilities.ReadString(jsonReader, "month");
-        long timestamp = Utilities.MillisFromString(formattedTimestamp, DATE_FORMAT);
+        long timestamp = Utilities.MillisecondsFromString(formattedTimestamp, DATE_FORMAT);
 
         return new GetPriceHistoryRequest(timestamp);
     }

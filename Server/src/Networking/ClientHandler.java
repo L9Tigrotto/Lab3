@@ -328,10 +328,7 @@ public class ClientHandler implements Runnable
         // check if the user is currently logged in
         if (_user == null) { response = GetPriceHistoryRequest.USER_NOT_LOGGED; }
 
-        else
-        {
-             response = HistoryRecordCollection.GetPrices(request);
-        }
+        else { response = HistoryRecordCollection.GetPrices(request); }
 
         SendResponse(response);
     }

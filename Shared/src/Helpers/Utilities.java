@@ -8,8 +8,14 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * This class provides utility functions.
@@ -84,41 +90,39 @@ public class Utilities
         return reader.nextLong();
     }
 
-    public static int GetYearFromMillis(long millis)
+    public static int GetYearFromMilliseconds(long milliseconds)
     {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(millis);
-        return calendar.get(Calendar.YEAR);
+        Instant instant = Instant.ofEpochMilli(milliseconds);
+        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.of("GMT"));
+        return zonedDateTime.getYear();
     }
 
-    public static int GetMonthFromMillis(long millis)
+    public static int GetMonthFromMilliseconds(long milliseconds)
     {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(millis);
-        return calendar.get(Calendar.MONTH);
+        Instant instant = Instant.ofEpochMilli(milliseconds);
+        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.of("GMT"));
+        return zonedDateTime.getMonth().getValue();
     }
 
-    public static int GetDayOfMonthFromMillis(long millis)
+    public static int GetDayOfMonthFromMilliseconds(long milliseconds)
     {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(millis);
-        return calendar.get(Calendar.DAY_OF_MONTH);
+        Instant instant = Instant.ofEpochMilli(milliseconds);
+        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.of("GMT"));
+        return zonedDateTime.getDayOfMonth();
     }
 
-    public static String MillisToString(long millis, String format)
+    public static String MillisecondsToString(long milliseconds, String format)
     {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(millis);
-        Date date = calendar.getTime();
-
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format);
-        return simpleDateFormat.format(date);
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return simpleDateFormat.format(milliseconds);
     }
 
-    public static long MillisFromString(String dateString, String format) throws ParseException
+    public static long MillisecondsFromString(String dateString, String format) throws ParseException
     {
-        SimpleDateFormat formatter = new SimpleDateFormat(format);
-        Date date = formatter.parse(dateString);
-        return date.getTime();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(format);
+        ZonedDateTime localDateTime = ZonedDateTime.parse(dateString, dateTimeFormatter);
+        Instant instant = localDateTime.toInstant();
+        return instant.toEpochMilli();
     }
 }
