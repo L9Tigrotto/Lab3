@@ -36,24 +36,6 @@ public class GlobalData
     // a concurrent hash map to store registered users (username as key, User object as value)
     public static final ConcurrentHashMap<String, User> USERS;
 
-    // first level list ordered by year and month
-    // second level list ordered by day
-    // [
-    //      2021/01 : [
-    //          { price history 1 },
-    //          { price history 2 },
-    //          ...
-    //      ],
-    //      ...
-    //      2021/03 : [
-    //          { price history 1 },
-    //          { price history 2 },
-    //      ...
-    //      ],
-    //      ...
-    // ]
-    public static final TreeSet<Tuple<Long, List<Tuple<Long, HistoryRecord>>>> ORDER_HISTORY;
-
     // static initializer block to data settings and users at startup
     static
     {
@@ -64,79 +46,14 @@ public class GlobalData
             throw new RuntimeException(e);
         }
 
-
         LISTENER = new Listener();
 
-        File orderHistoryFile = new File(SETTINGS.OrderHistoryFilename);
-        ORDER_HISTORY = new TreeSet<>(
-                (tuple1, tuple2) ->
-                {
-                    int year1 = Utilities.GetYearFromMillis(tuple1.GetX());
-                    int month1 = Utilities.GetMonthFromMillis(tuple1.GetX());
-
-                    int year2 = Utilities.GetYearFromMillis(tuple2.GetX());
-                    int month2 = Utilities.GetMonthFromMillis(tuple2.GetX());
-
-                    int comp = Integer.compare(year1, year2);
-                    if (comp == 0) { comp = Integer.compare(month1, month2); }
-                    return comp;
-                }
-        );
-
-        long lastUsedID = Long.MIN_VALUE;
-        if (orderHistoryFile.exists())
+        long lastUsedID;
+        try { lastUsedID = HistoryRecordCollection.Load(SETTINGS.OrderHistoryFilename); }
+        catch (IOException e)
         {
-            try (FileReader fileReader = new FileReader(orderHistoryFile);
-                JsonReader jsonReader = new JsonReader(fileReader))
-            {
-                jsonReader.beginObject();
-
-                if (!jsonReader.nextName().equals("trades")) { throw new JsonIOException(""); }
-                jsonReader.beginArray();
-
-                while (jsonReader.hasNext())
-                {
-                    jsonReader.beginObject();
-
-                    long orderID = Utilities.ReadLong(jsonReader, "orderID");
-                    Method method = Method.FromString(Utilities.ReadString(jsonReader, "type"));
-                    Type type = Type.FromString(Utilities.ReadString(jsonReader, "orderType"));
-                    long size = Utilities.ReadLong(jsonReader, "size");
-                    long price = Utilities.ReadLong(jsonReader, "price");
-                    long timestamp = Utilities.ReadLong(jsonReader, "timestamp") * 1000;
-
-                    // check if te current month/year exists in the list
-                    Tuple<Long, List<Tuple<Long, HistoryRecord>>> dummy = new Tuple<>(timestamp, null);
-                    Tuple<Long, List<Tuple<Long, HistoryRecord>>> firstLevelTuple;
-                    List<Tuple<Long, HistoryRecord>> secondLevelTuple;
-
-                    if (ORDER_HISTORY.contains(dummy))
-                    {
-                        firstLevelTuple = ORDER_HISTORY.ceiling(dummy);
-                        secondLevelTuple = firstLevelTuple.GetY();
-                    }
-                    else
-                    {
-                        secondLevelTuple = new ArrayList<>();
-                        firstLevelTuple = new Tuple<>(timestamp, secondLevelTuple);
-                        ORDER_HISTORY.add(firstLevelTuple);
-                    }
-
-                    HistoryRecord historyRecord = new HistoryRecord(orderID, method, type, size, price, timestamp);
-                    Tuple<Long, HistoryRecord> tuple = new Tuple<>(timestamp, historyRecord);
-
-                    secondLevelTuple.add(tuple);
-
-                    if (lastUsedID < orderID) { lastUsedID = orderID; }
-
-                    jsonReader.endObject();
-                }
-
-                jsonReader.endArray();
-                jsonReader.endObject();
-            }
-            catch (Exception e) { System.out.printf("[ERROR] Unable to load settings file: %s\n", e.getMessage()); }
-            //catch (IOException e) { System.out.printf("[ERROR] Unable to load order history file: %s\n", e.getMessage()); }
+            System.out.printf("[ERROR] Unable to load order history file: %s\n", e.getMessage());
+            throw new RuntimeException(e);
         }
 
         if (SETTINGS.NextOrderID <= lastUsedID) { SETTINGS.NextOrderID = lastUsedID + 1; }
@@ -245,39 +162,8 @@ public class GlobalData
         try { SETTINGS.Save();}
         catch (IOException e) { System.out.printf("[ERROR] Unable to save settings to file: %s\n", e.getMessage()); }
 
-        File orderHistoryFile = new File(SETTINGS.OrderHistoryFilename);
-
-        try (FileWriter fileWriter = new FileWriter(orderHistoryFile);
-             JsonWriter jsonWriter = new JsonWriter(fileWriter))
-        {
-            jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
-            jsonWriter.beginObject();
-
-            jsonWriter.name("trades");
-            jsonWriter.beginArray();
-
-            for (Tuple<Long, List<Tuple<Long, HistoryRecord>>> firstLevel : ORDER_HISTORY)
-            {
-                for (Tuple<Long, HistoryRecord> secondLevel : firstLevel.GetY())
-                {
-                    jsonWriter.beginObject();
-
-                    HistoryRecord record = secondLevel.GetY();
-                    jsonWriter.name("orderID").value(record.GetID());
-                    jsonWriter.name("type").value(record.GetMethod().ToString());
-                    jsonWriter.name("orderType").value(record.GetType().ToString());
-                    jsonWriter.name("size").value(record.GetSize());
-                    jsonWriter.name("price").value(record.GetPrice());
-                    jsonWriter.name("timestamp").value(record.GetTimestamp());
-
-                    jsonWriter.endObject();
-                }
-            }
-
-            jsonWriter.endArray();
-            jsonWriter.endObject();
-        }
-        catch (IOException e) { System.out.printf("[ERROR] Unable to save order history to file: %s\n", e.getMessage()); }
+        try { HistoryRecordCollection.Save(SETTINGS.OrderHistoryFilename); }
+        catch (IOException e) { System.out.printf("[ERROR] Unable to save order history file: %s\n", e.getMessage()); }
 
         File usersFile = new File(SETTINGS.UsersFilename);
 
