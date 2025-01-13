@@ -3,16 +3,14 @@ package Networking;
 
 import Helpers.GlobalData;
 import Messages.*;
-import Orders.LimitOrder;
-import Orders.MarketOrder;
-import Orders.OrderBook;
-import Orders.StopOrder;
+import Orders.*;
 import Users.User;
 import Users.UserCollection;
 import Users.UserNotRegisteredException;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.text.ParseException;
 
 /**
  * This class represents a handler for a connected client. It is responsible for receiving requests from the client,
@@ -58,7 +56,13 @@ public class ClientHandler implements Runnable
             try
             {
                 // receive the request from the client
-                Request request = _connection.ReceiveRequest();
+                Request request;
+                try { request = _connection.ReceiveRequest(); }
+                catch (ParseException e)
+                {
+                    System.out.println("[ERROR] Unable to parse the request, interrupting communications with the client");
+                    _connection.Close(); return;
+                }
 
                 // handle the request based on its operation type
                 switch (request.GetOperation()){
@@ -319,6 +323,16 @@ public class ClientHandler implements Runnable
 
     private void HandleGetPriceHistoryRequest(GetPriceHistoryRequest request) throws IOException
     {
+        SimpleResponse response;
 
+        // check if the user is currently logged in
+        if (_user == null) { response = GetPriceHistoryRequest.USER_NOT_LOGGED; }
+
+        else
+        {
+             response = HistoryRecordCollection.GetPrices(request);
+        }
+
+        SendResponse(response);
     }
 }

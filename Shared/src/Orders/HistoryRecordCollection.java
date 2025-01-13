@@ -2,13 +2,15 @@ package Orders;
 
 import Helpers.Tuple;
 import Helpers.Utilities;
+import Messages.GetPriceHistoryRequest;
+import Messages.SimpleResponse;
 import com.google.gson.FormattingStyle;
-import com.google.gson.JsonIOException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -54,18 +56,101 @@ public class HistoryRecordCollection
     private void AddInternal(HistoryRecord record)
     {
         Tuple<Long, List<Tuple<Long, HistoryRecord>>> dummy = new Tuple<>(record.GetTimestamp(), null);
+        synchronized (_collection)
+        {
+            Tuple<Long, List<Tuple<Long, HistoryRecord>>> firstLayerTuple = _collection.ceiling(dummy);
+            List<Tuple<Long, HistoryRecord>> secondLayerTuple;
+
+            if (firstLayerTuple == null)
+            {
+                secondLayerTuple = new ArrayList<>();
+                firstLayerTuple = new Tuple<>(record.GetTimestamp(), secondLayerTuple);
+                _collection.add(firstLayerTuple);
+            }
+            else { secondLayerTuple = firstLayerTuple.GetY(); }
+
+            secondLayerTuple.add(new Tuple<>(record.GetTimestamp(), record));
+        }
+    }
+
+    private List<Tuple<Long, HistoryRecord>> GetSpecificMonth(long timestamp)
+    {
+        Tuple<Long, List<Tuple<Long, HistoryRecord>>> dummy = new Tuple<>(timestamp, null);
         Tuple<Long, List<Tuple<Long, HistoryRecord>>> firstLayerTuple = _collection.ceiling(dummy);
         List<Tuple<Long, HistoryRecord>> secondLayerTuple;
 
-        if (firstLayerTuple == null)
-        {
-            secondLayerTuple = new ArrayList<>();
-            firstLayerTuple = new Tuple<>(record.GetTimestamp(), secondLayerTuple);
-            _collection.add(firstLayerTuple);
-        }
-        else { secondLayerTuple = firstLayerTuple.GetY(); }
+        if (firstLayerTuple == null) { return new ArrayList<>(); }
+        return firstLayerTuple.GetY();
+    }
 
-        secondLayerTuple.add(new Tuple<>(record.GetTimestamp(), record));
+    private SimpleResponse GetPricesInternal(GetPriceHistoryRequest request)
+    {
+        String result;
+        int currentDay = -1;
+        long open = 0, close = 0, max = 0, min = 0;
+        int counter = 0;
+
+        synchronized (_collection)
+        {
+            List<Tuple<Long, HistoryRecord>> tuples = GetSpecificMonth(request.GetTimestamp());
+            tuples.sort((tuple1, tuple2) ->
+            {
+                int day1 = Utilities.GetDayOfMonthFromMillis(tuple1.GetX());
+                int day2 = Utilities.GetDayOfMonthFromMillis(tuple2.GetX());
+
+                int comp = Integer.compare(day1, day2);
+                if (comp == 0) { comp = Long.compare(tuple1.GetY().GetID(), tuple2.GetY().GetID()); }
+                return comp;
+            });
+
+            try (StringWriter stringWriter = new StringWriter();
+                 JsonWriter jsonWriter = new JsonWriter(stringWriter))
+            {
+                stringWriter.append("\n");
+
+                jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
+                jsonWriter.beginArray();
+
+                for (Tuple<Long, HistoryRecord> tuple : tuples)
+                {
+                    HistoryRecord record = tuple.GetY();
+                    int day = Utilities.GetDayOfMonthFromMillis(tuple.GetX());
+
+                    if (day != currentDay)
+                    {
+                        if (currentDay != -1)
+                        {
+                            jsonWriter.beginObject();
+
+                            System.out.printf("Counter: %d\n", ++counter);
+
+                            jsonWriter.name("day").value(day);
+                            jsonWriter.name("open").value(open);
+                            jsonWriter.name("close").value(close);
+                            jsonWriter.name("min").value(min);
+                            jsonWriter.name("max").value(max);
+
+                            jsonWriter.endObject();
+                        }
+
+                        currentDay = day;
+                        open = close = min = max = record.GetPrice();
+                    }
+                    else
+                    {
+                        close = record.GetPrice();
+                        if (min > close) { min = close; }
+                        if (max < close) { max = close; }
+                    }
+                }
+
+                jsonWriter.endArray();
+                result = stringWriter.toString();
+            }
+            catch (IOException e) { return GetPriceHistoryRequest.OTHER_ERROR_CASES; }
+        }
+
+        return new SimpleResponse(100, result);
     }
 
     private long LoadInternal(String filename) throws IOException
@@ -151,6 +236,7 @@ public class HistoryRecordCollection
     }
 
     public static void Add(HistoryRecord record) { _instance.AddInternal(record); }
+    public static SimpleResponse GetPrices(GetPriceHistoryRequest request) { return _instance.GetPricesInternal(request); }
     public static long Load(String filename) throws IOException { return _instance.LoadInternal(filename); }
     public static void Save(String filename) throws IOException { _instance.SaveInternal(filename); }
 }

@@ -6,6 +6,7 @@ import Networking.RequestHandler;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.text.ParseException;
 import java.util.Scanner;
 
 /**
@@ -32,7 +33,8 @@ public class Main
         catch (IOException e) { System.err.printf("[ERROR] Unable to create connection: %s\n", e.getMessage()); return; }
 
         // print the available options to the user
-        PrintOptions();
+        System.out.println("a) 'exit' to exit");
+        System.out.println("b) 'help' print options");
         boolean isConnectionAlive = true;
         while (isConnectionAlive)
         {
@@ -53,6 +55,7 @@ public class Main
             else if (command.equalsIgnoreCase("insertLimitOrder")) { isConnectionAlive = RequestHandler.SendInsertLimitOrder(connection, words); }
             else if (command.equalsIgnoreCase("insertStopOrder")) { isConnectionAlive = RequestHandler.SendInsertStopOrder(connection, words); }
             else if (command.equalsIgnoreCase("cancelOrder")) { isConnectionAlive = RequestHandler.SendCancelOrder(connection, words); }
+            else if (command.equalsIgnoreCase("getPriceHistory")) { isConnectionAlive = RequestHandler.SendGetPriceHistory(connection, words); }
             else { System.out.println("[WARNING] Unknown command. 'help' to see options."); }
 
             // check if connection with the server is still alive
@@ -84,6 +87,7 @@ public class Main
         System.out.println("6) 'insertLimitOrder <type> <size> <limit>' to insert a limit order");
         System.out.println("7) 'insertStopOrder <type> <size> <stopPrice>' to insert a stop order");
         System.out.println("8) 'cancelOrder <orderID>' to cancel an order");
+        System.out.println("9) 'getPriceHistory <month: Jan, Feb, ...> <year>' to get price history");
     }
 
     /**

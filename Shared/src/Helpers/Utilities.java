@@ -6,7 +6,10 @@ import com.google.gson.stream.JsonReader;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * This class provides utility functions.
@@ -95,19 +98,27 @@ public class Utilities
         return calendar.get(Calendar.MONTH);
     }
 
-    public static int GetDayOfTheMonthFromMillis(long millis)
+    public static int GetDayOfMonthFromMillis(long millis)
     {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(millis);
         return calendar.get(Calendar.DAY_OF_MONTH);
     }
 
-    public static long GetMillisFromYearAndMonth(int year, int month)
+    public static String MillisToString(long millis, String format)
     {
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.YEAR, year);
-        calendar.set(Calendar.MONTH, month);
-        calendar.set(Calendar.DAY_OF_MONTH, 1);
-        return calendar.getTimeInMillis();
+        calendar.setTimeInMillis(millis);
+        Date date = calendar.getTime();
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format);
+        return simpleDateFormat.format(date);
+    }
+
+    public static long MillisFromString(String dateString, String format) throws ParseException
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat(format);
+        Date date = formatter.parse(dateString);
+        return date.getTime();
     }
 }

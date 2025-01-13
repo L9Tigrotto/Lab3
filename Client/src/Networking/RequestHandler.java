@@ -1,11 +1,13 @@
 
 package Networking;
 
+import Helpers.Utilities;
 import Messages.*;
 import Orders.Method;
 import Users.User;
 
 import java.io.IOException;
+import java.text.ParseException;
 
 public class RequestHandler
 {
@@ -369,6 +371,42 @@ public class RequestHandler
         catch (NumberFormatException e) { System.out.println("[ERROR] <orderID> is not a number"); return true; }
 
         CancelOrderRequest request = new CancelOrderRequest(orderID);
+        SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, request);
+        if (response == null) { return false; }
+
+        PrintResponse(response);
+        return true;
+    }
+
+    public static boolean SendGetPriceHistory(Connection connection, String[] words)
+    {
+        // check for correct number of arguments for cancelOrder command
+        if (words.length != 3)
+        {
+            System.out.println("[INFO] Usage: getPriceHistory <month: Jan, Feb, ...> <year>");
+            return true;
+        }
+
+        // check if a user is logged in to place orders
+        if (_user == null)
+        {
+            System.out.println("[WARNING] It's not possible to send get price history request if you are not logged in");
+            return true;
+        }
+
+        // validate the year (number)
+        try { int year = Integer.parseInt(words[2]); }
+        catch (NumberFormatException e) { System.out.println("[ERROR] <year> is not a number"); return true; }
+
+        // validate the month
+        if (words[1].length() != 3) { System.out.println("[ERROR] <month> is not valid"); return true; }
+
+        String formattedTimestamp = String.format("%s%s", words[1], words[2]);
+        long timestamp;
+        try { timestamp = Utilities.MillisFromString(formattedTimestamp, GetPriceHistoryRequest.DATE_FORMAT); }
+        catch (ParseException e) { System.out.printf("[ERROR] Unable to parse '%s'\n", formattedTimestamp); return true; }
+
+        GetPriceHistoryRequest request = new GetPriceHistoryRequest(timestamp);
         SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, request);
         if (response == null) { return false; }
 

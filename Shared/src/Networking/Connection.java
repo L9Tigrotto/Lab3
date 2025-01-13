@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.text.ParseException;
 
 /**
  * This class represents a network connection over a TCP socket.
@@ -55,7 +56,7 @@ public class Connection
      * @return The Request object received from the network.
      * @throws IOException If an error occurs while reading data or parsing the JSON string.
      */
-    public Request ReceiveRequest() throws IOException { return Request.FromJson(_dataInputStream.readUTF()); }
+    public Request ReceiveRequest() throws IOException, ParseException { return Request.FromJson(_dataInputStream.readUTF()); }
 
     /**
      * Receives a response object from the network connection.

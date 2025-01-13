@@ -9,6 +9,7 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.text.ParseException;
 
 /**
  * This class defines an abstract base class for network requests in JSON format.
@@ -87,7 +88,7 @@ public abstract class Request
      * @return The Request object corresponding to the JSON string.
      * @throws IOException If an error occurs during JSON deserialization.
      */
-    public static Request FromJson(String json) throws IOException
+    public static Request FromJson(String json) throws IOException, ParseException
     {
         String temp;
         Request request;
