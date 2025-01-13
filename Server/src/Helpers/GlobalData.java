@@ -26,8 +26,6 @@ public class GlobalData
 {
     // the filename of the server configuration file
     private static final String CONFIG_FILENAME = "server.properties";
-    private static final String USERS_FILENAME = "users.json";
-    private static final String ORDER_HISTORY_FILENAME=  "storicoOrdini.json";
 
     // the server settings object, loaded from the configuration file
     public static final ServerSettings SETTINGS;
@@ -69,7 +67,7 @@ public class GlobalData
 
         LISTENER = new Listener();
 
-        File orderHistoryFile = new File(ORDER_HISTORY_FILENAME);
+        File orderHistoryFile = new File(SETTINGS.OrderHistoryFilename);
         ORDER_HISTORY = new TreeSet<>(
                 (tuple1, tuple2) ->
                 {
@@ -144,8 +142,8 @@ public class GlobalData
         if (SETTINGS.NextOrderID <= lastUsedID) { SETTINGS.NextOrderID = lastUsedID + 1; }
 
 
-        File usersFile = new File(USERS_FILENAME);
-        USERS = new ConcurrentHashMap<String, User>();
+        File usersFile = new File(SETTINGS.UsersFilename);
+        USERS = new ConcurrentHashMap<>();
 
         if (usersFile.exists())
         {
@@ -247,7 +245,7 @@ public class GlobalData
         try { SETTINGS.Save();}
         catch (IOException e) { System.out.printf("[ERROR] Unable to save settings to file: %s\n", e.getMessage()); }
 
-        File orderHistoryFile = new File(ORDER_HISTORY_FILENAME);
+        File orderHistoryFile = new File(SETTINGS.OrderHistoryFilename);
 
         try (FileWriter fileWriter = new FileWriter(orderHistoryFile);
              JsonWriter jsonWriter = new JsonWriter(fileWriter))
@@ -281,7 +279,7 @@ public class GlobalData
         }
         catch (IOException e) { System.out.printf("[ERROR] Unable to save order history to file: %s\n", e.getMessage()); }
 
-        File usersFile = new File(USERS_FILENAME);
+        File usersFile = new File(SETTINGS.UsersFilename);
 
         try (FileWriter fileWriter = new FileWriter(usersFile);
             JsonWriter jsonWriter = new JsonWriter(fileWriter))

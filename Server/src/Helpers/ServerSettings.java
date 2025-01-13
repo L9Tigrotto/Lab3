@@ -1,3 +1,4 @@
+
 package Helpers;
 
 import java.io.IOException;
@@ -23,6 +24,10 @@ public class ServerSettings extends Settings
     // next available order ID
     public long NextOrderID;
 
+    public String UsersFilename;
+
+    public String OrderHistoryFilename;
+
     /**
      * Constructor that takes the configuration filename as input.
      * @param filename The name of the configuration file.
@@ -47,6 +52,8 @@ public class ServerSettings extends Settings
         WaitDataTimeoutMS = Integer.parseInt(properties.getProperty("WaitDataTimeoutMS"));
         ClientInactiveThresholdMS = Integer.parseInt(properties.getProperty("ClientInactiveThresholdMS"));
         NextOrderID = Integer.parseInt(properties.getProperty("NextOrderID"));
+        UsersFilename = properties.getProperty("UsersFilename");
+        OrderHistoryFilename = properties.getProperty("OrderHistoryFilename");
     }
 
     @Override
