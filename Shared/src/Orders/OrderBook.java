@@ -62,6 +62,28 @@ public class OrderBook
         }
     }
 
+    public static long GetBestPrice(Method method)
+    {
+        long price = 0;
+        switch (method)
+        {
+            case ASK -> {
+                synchronized (_askOrders)
+                {
+                    if (!_askOrders.isEmpty()) { price = _askOrders.peek().GetPrice(); }
+                }
+            }
+            case BID -> {
+                synchronized (_bidOrders)
+                {
+                    if (!_bidOrders.isEmpty()) { price = _bidOrders.peek().GetPrice(); }
+                }
+            }
+        }
+
+        return price;
+    }
+
     private static void AppendInfo(StringBuilder status, PriorityQueue<Order> orderQueue)
     {
         status.append(String.format("%10s%10s%10s\n", "Price", "Size", "Total"));

@@ -8,7 +8,7 @@ public class MarketOrder extends Order
 {
     public MarketOrder(long id, Method method, long size, User user)
     {
-        super(id, Type.MARKET, method, size, 0, user);
+        super(id, Type.MARKET, method, size, OrderBook.GetBestPrice(method), user);
     }
 
     public Cart CreateCart() { return new Cart(this); }

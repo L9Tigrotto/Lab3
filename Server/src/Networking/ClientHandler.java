@@ -271,7 +271,8 @@ public class ClientHandler implements Runnable
         else
         {
             MarketOrder order = GlobalData.CreateMarketOrder(request, _user);
-            response = OrderBook.ProcessOrder(order);
+            if (order.GetPrice() == 0) { response = OrderResponse.INVALID; }
+            else { response = OrderBook.ProcessOrder(order); }
         }
 
         SendResponse(response);
