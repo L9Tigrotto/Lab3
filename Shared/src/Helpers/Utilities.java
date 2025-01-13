@@ -101,4 +101,13 @@ public class Utilities
         calendar.setTimeInMillis(millis);
         return calendar.get(Calendar.DAY_OF_MONTH);
     }
+
+    public static long GetMillisFromYearAndMonth(int year, int month)
+    {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.MONTH, month);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        return calendar.getTimeInMillis();
+    }
 }
