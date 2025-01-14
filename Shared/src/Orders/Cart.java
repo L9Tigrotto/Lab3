@@ -9,17 +9,22 @@ import java.util.List;
 public class Cart
 {
     private final List<Order> _orders;
-    public final MarketOrder _order;
+    public final Order _order;
     public long _targetSize;
+    public long _totalPrice;
 
-    public Cart(MarketOrder order)
+    public Cart(Order order)
     {
         _orders = new ArrayList<>();
         _order = order;
         _targetSize = order.GetSize();
+        _totalPrice = 0;
     }
 
-    public boolean TrySellTo(Order askOrder)
+    public boolean IsOrderConsumed() { return _targetSize == 0; }
+    public long GetTotalPrice() { return _totalPrice; }
+
+    public boolean CanSellTo(Order askOrder)
     {
         Tuple<Long, Long> size_price = _order.CanSellTo(askOrder);
 
@@ -27,11 +32,12 @@ public class Cart
 
         _orders.add(askOrder);
         _targetSize -= size_price.GetX();
+        _totalPrice += size_price.GetY();
 
         return _targetSize != 0;
     }
 
-    public boolean TryBuyFrom(Order order)
+    public boolean CanBuyFrom(Order order)
     {
         Tuple<Long, Long> size_price = _order.CanBuyFrom(order);
 
@@ -39,11 +45,10 @@ public class Cart
 
         _orders.add(order);
         _targetSize -= size_price.GetX();
+        _totalPrice += size_price.GetY();
 
         return _targetSize != 0;
     }
-
-    public boolean IsOrderConsumed() { return _targetSize == 0; }
 
     public List<Order> SellAll()
     {

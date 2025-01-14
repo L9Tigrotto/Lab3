@@ -32,6 +32,8 @@ public class Main
         try { connection = new Connection(socket); }
         catch (IOException e) { System.err.printf("[ERROR] Unable to create connection: %s\n", e.getMessage()); return; }
 
+        if (true) { Test.Run(connection); return; }
+
         // print the available options to the user
         System.out.println("a) 'exit' to exit");
         System.out.println("b) 'help' print options");

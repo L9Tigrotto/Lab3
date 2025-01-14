@@ -35,24 +35,34 @@ public abstract class Order
 
     public boolean IsConsumed() { return _size == 0; }
 
-    private void DecreaseSize(long size) { _size -= size; }
+    public boolean WantToSell() { return _method == Method.ASK; }
+    public boolean WantToBuy() { return _method == Method.BID; }
+
+    public abstract boolean WantToSellAt(long price);
+    public abstract boolean WantToBuyAt(long price);
+
+    protected void DecreaseSize(Tuple<Long, Long> size_price) { _size -= size_price.GetX(); }
+
+    public Cart CreateCart() { return new Cart(this); }
 
     public Tuple<Long, Long> CanSellTo(Order order)
     {
-        if (GetMethod() != Method.ASK) { return new Tuple<>(0L, 0L); }
-        if (order.GetMethod() != Method.BID) { return new Tuple<>(0L, 0L); }
-        if (GetPrice() > order.GetPrice()) { return new Tuple<>(0L, 0L); }
+        long price = Math.min(_price, order.GetPrice());
+        long size = Math.min(_size, order.GetSize());
 
-        return new Tuple<>(Math.min(GetSize(), order.GetSize()), GetPrice());
+        if (!WantToSellAt(price) || !order.WantToBuyAt(price)) { return new Tuple<>(0L, 0L); }
+
+        return new Tuple<>(size, price);
     }
 
     public Tuple<Long, Long> CanBuyFrom(Order order)
     {
-        if (GetMethod() != Method.BID) { return new Tuple<>(0L, 0L); }
-        if (order.GetMethod() != Method.ASK) { return new Tuple<>(0L, 0L); }
-        if (GetPrice() < order.GetPrice()) { return new Tuple<>(0L, 0L); }
+        long price = Math.min(_price, order.GetPrice());
+        long size = Math.min(_size, order.GetSize());
 
-        return new Tuple<>(Math.min(GetSize(), order.GetSize()), GetPrice());
+        if (!WantToBuyAt(price) || !order.WantToSellAt(price)) { return new Tuple<>(0L, 0L); }
+
+        return new Tuple<>(size, price);
     }
 
     public boolean TrySellTo(Order order)
@@ -60,8 +70,10 @@ public abstract class Order
         Tuple<Long, Long> size_price = CanSellTo(order);
         if (size_price.GetX() == 0) { return false; }
 
-        DecreaseSize(size_price.GetX());
-        order.DecreaseSize(size_price.GetX());
+        DecreaseSize(size_price);
+        order.DecreaseSize(size_price);
+
+        System.out.printf("%s:%s sold (size: %d, price: %d)\n", _type.ToString(), _method.ToString(), size_price.GetX(), size_price.GetY());
 
         HistoryRecord record = new HistoryRecord(this, size_price);
         HistoryRecordCollection.Add(record);
@@ -74,8 +86,10 @@ public abstract class Order
         Tuple<Long, Long> size_price = CanBuyFrom(order);
         if (size_price.GetX() == 0) { return false; }
 
-        DecreaseSize(size_price.GetX());
-        order.DecreaseSize(size_price.GetX());
+        DecreaseSize(size_price);
+        order.DecreaseSize(size_price);
+
+        System.out.printf("%s:%s bought (size: %d, price: %d)\n", _type.ToString(), _method.ToString(), size_price.GetX(), size_price.GetY());
 
         HistoryRecord record = new HistoryRecord(this, size_price);
         HistoryRecordCollection.Add(record);

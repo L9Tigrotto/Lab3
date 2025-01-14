@@ -2,12 +2,9 @@ package Orders;
 
 public enum Type
 {
-    MARKET(0),
-    LIMIT(1),
-    STOP(2);
-
-    private final int _value;
-    Type(int value) { _value = value; }
+    MARKET,
+    LIMIT,
+    STOP;
 
     public String ToString()
     {

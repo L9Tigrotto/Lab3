@@ -76,7 +76,7 @@ public class Listener
             }
 
             threadPool.shutdown();
-            try { boolean closed = threadPool.awaitTermination(5, TimeUnit.MINUTES); }
+            try { boolean closed = threadPool.awaitTermination(GlobalData.SETTINGS.ClientInactiveThresholdMS + 2, TimeUnit.MINUTES); }
             catch (InterruptedException e) { System.out.printf("[ERROR] Unable to terminate thread pool correctly: %s\n", e.getMessage()); }
         } catch (IOException e) { System.out.printf("[ERROR] I/O exception: %s\n", e.getMessage()); }
     }

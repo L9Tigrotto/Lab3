@@ -2,11 +2,8 @@ package Orders;
 
 public enum Method
 {
-    BID(0),
-    ASK(1);
-
-    private final int _value;
-    Method(int value) { _value = value; }
+    BID,
+    ASK;
 
     public String ToString()
     {
