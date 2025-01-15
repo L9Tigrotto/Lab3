@@ -11,6 +11,7 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -34,78 +35,90 @@ public class HistoryRecordCollection
 {
     private static final HistoryRecordCollection _instance = new HistoryRecordCollection();
 
-    private final TreeSet<Tuple<Long, List<Tuple<Long, HistoryRecord>>>> _collection;
+    private final TreeSet<
+            Tuple<Long, TreeSet< // years and months
+                    Tuple<Long, List<HistoryRecord>> // days
+                    >>
+            > _collection;
 
     private HistoryRecordCollection()
     {
         _collection = new TreeSet<>(
-                HistoryRecordCollection::compare);
+                (timestamp_days1, timestamp_days2) -> {
+                    int year1 = Utilities.GetYearFromMilliseconds(timestamp_days1.GetX());
+                    int month1 = Utilities.GetMonthFromMilliseconds(timestamp_days1.GetX());
+
+                    int year2 = Utilities.GetYearFromMilliseconds(timestamp_days2.GetX());
+                    int month2 = Utilities.GetMonthFromMilliseconds(timestamp_days2.GetX());
+
+                    int comp = Integer.compare(year1, year2);
+                    if (comp == 0) { comp = Integer.compare(month1, month2); }
+                    return comp;
+                });
     }
 
-    private static int compare(Tuple<Long, List<Tuple<Long, HistoryRecord>>> tuple1, Tuple<Long, List<Tuple<Long, HistoryRecord>>> tuple2)
+    private static TreeSet<Tuple<Long, List<HistoryRecord>>> CreateSecondLayer()
     {
-        int year1 = Utilities.GetYearFromMilliseconds(tuple1.GetX());
-        int month1 = Utilities.GetMonthFromMilliseconds(tuple1.GetX());
+        return new TreeSet<>(
+                (timestamp_recodList1, timestamp_recodList2) ->
+                {
+                    int day1 = Utilities.GetDayOfMonthFromMilliseconds(timestamp_recodList1.GetX());
+                    int day2 = Utilities.GetDayOfMonthFromMilliseconds(timestamp_recodList2.GetX());
 
-        int year2 = Utilities.GetYearFromMilliseconds(tuple2.GetX());
-        int month2 = Utilities.GetMonthFromMilliseconds(tuple2.GetX());
+                    return Integer.compare(day1, day2);
+                });
+    }
 
-        int comp = Integer.compare(year1, year2);
-        if (comp == 0)
+    private Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> GetFirstLayerTuple(long timestamp)
+    {
+        Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> dummy = new Tuple<>(timestamp, null);
+        Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> firstLayerTuple;
+
+        if (_collection.contains(dummy)) { firstLayerTuple = _collection.ceiling(dummy); }
+        else
         {
-            comp = Integer.compare(month1, month2);
+            TreeSet<Tuple<Long, List<HistoryRecord>>> secondLayer = CreateSecondLayer();
+            firstLayerTuple = new Tuple<>(timestamp, secondLayer);
+            _collection.add(firstLayerTuple);
         }
-        return comp;
+
+        return firstLayerTuple;
+    }
+
+    private Tuple<Long, List<HistoryRecord>> GetSecondLayerTuple(Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> firstLayerTuple, long timestamp)
+    {
+        Tuple<Long, List<HistoryRecord>> dummy = new Tuple<>(timestamp, null);
+        TreeSet<Tuple<Long, List<HistoryRecord>>> secondLayer = firstLayerTuple.GetY();
+        Tuple<Long, List<HistoryRecord>> secondLayerTuple;
+
+        if (secondLayer.contains(dummy)) { secondLayerTuple = secondLayer.ceiling(dummy); }
+        else
+        {
+            List<HistoryRecord> recordList = new ArrayList<>();
+            secondLayerTuple = new Tuple<>(timestamp, recordList);
+            secondLayer.add(secondLayerTuple);
+        }
+
+        return secondLayerTuple;
     }
 
     private void AddInternal(HistoryRecord record)
     {
-        Tuple<Long, List<Tuple<Long, HistoryRecord>>> dummy = new Tuple<>(record.GetTimestamp(), null);
         synchronized (_collection)
         {
-            Tuple<Long, List<Tuple<Long, HistoryRecord>>> firstLayerTuple = _collection.ceiling(dummy);
-            List<Tuple<Long, HistoryRecord>> secondLayerTuple;
-
-            if (firstLayerTuple == null)
-            {
-                secondLayerTuple = new ArrayList<>();
-                firstLayerTuple = new Tuple<>(record.GetTimestamp(), secondLayerTuple);
-                _collection.add(firstLayerTuple);
-            }
-            else { secondLayerTuple = firstLayerTuple.GetY(); }
-
-            secondLayerTuple.add(new Tuple<>(record.GetTimestamp(), record));
+            Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> firstLayerTuple = GetFirstLayerTuple(record.GetTimestamp());
+            Tuple<Long, List<HistoryRecord>> secondLayerTuple = GetSecondLayerTuple(firstLayerTuple, record.GetTimestamp());
+            secondLayerTuple.GetY().add(record);
         }
-    }
-
-    private List<Tuple<Long, HistoryRecord>> GetSpecificMonth(long timestamp)
-    {
-        Tuple<Long, List<Tuple<Long, HistoryRecord>>> dummy = new Tuple<>(timestamp, null);
-        Tuple<Long, List<Tuple<Long, HistoryRecord>>> firstLayerTuple = _collection.ceiling(dummy);
-
-        if (firstLayerTuple == null) { return new ArrayList<>(); }
-        return firstLayerTuple.GetY();
     }
 
     private SimpleResponse GetPricesInternal(GetPriceHistoryRequest request)
     {
         String result;
-        int currentDay = -1;
-        long open = 0, close = 0, max = 0, min = 0;
-        int counter = 0;
 
         synchronized (_collection)
         {
-            List<Tuple<Long, HistoryRecord>> tuples = GetSpecificMonth(request.GetTimestamp());
-            tuples.sort((tuple1, tuple2) ->
-            {
-                int day1 = Utilities.GetDayOfMonthFromMilliseconds(tuple1.GetX());
-                int day2 = Utilities.GetDayOfMonthFromMilliseconds(tuple2.GetX());
-
-                int comp = Integer.compare(day1, day2);
-                if (comp == 0) { comp = Long.compare(tuple1.GetY().GetID(), tuple2.GetY().GetID()); }
-                return comp;
-            });
+            TreeSet<Tuple<Long, List<HistoryRecord>>> yearAndMonth = GetFirstLayerTuple(request.GetTimestamp()).GetY();
 
             try (StringWriter stringWriter = new StringWriter();
                  JsonWriter jsonWriter = new JsonWriter(stringWriter))
@@ -115,36 +128,31 @@ public class HistoryRecordCollection
                 jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
                 jsonWriter.beginArray();
 
-                for (Tuple<Long, HistoryRecord> tuple : tuples)
+                for (Tuple<Long, List<HistoryRecord>> tuple : yearAndMonth)
                 {
-                    HistoryRecord record = tuple.GetY();
-                    int day = Utilities.GetDayOfMonthFromMilliseconds(tuple.GetX());
-
-                    if (day != currentDay)
+                    long open = 0, close = 0, max = 0, min = 0, count = 0;
+                    for (HistoryRecord record : tuple.GetY())
                     {
-                        if (currentDay != -1)
-                        {
-                            jsonWriter.beginObject();
-
-                            System.out.printf("Counter: %d\n", ++counter);
-
-                            jsonWriter.name("day").value(day);
-                            jsonWriter.name("open").value(open);
-                            jsonWriter.name("close").value(close);
-                            jsonWriter.name("min").value(min);
-                            jsonWriter.name("max").value(max);
-
-                            jsonWriter.endObject();
-                        }
-
-                        currentDay = day;
-                        open = close = min = max = record.GetPrice();
-                    }
-                    else
-                    {
+                        if (count == 0) { open = record.GetPrice(); }
                         close = record.GetPrice();
-                        if (min > close) { min = close; }
-                        if (max < close) { max = close; }
+
+                        if (min > close) { min = record.GetPrice(); }
+                        if (max < close) { max = record.GetPrice(); }
+
+                        count++;
+                    }
+
+                    if (count > 0)
+                    {
+                        jsonWriter.beginObject();
+
+                        jsonWriter.name("day").value(Utilities.GetDayOfMonthFromMilliseconds(tuple.GetX()));
+                        jsonWriter.name("open").value(open);
+                        jsonWriter.name("close").value(close);
+                        jsonWriter.name("min").value(min);
+                        jsonWriter.name("max").value(max);
+
+                        jsonWriter.endObject();
                     }
                 }
 
@@ -216,21 +224,23 @@ public class HistoryRecordCollection
             jsonWriter.name("trades");
             jsonWriter.beginArray();
 
-            for (Tuple<Long, List<Tuple<Long, HistoryRecord>>> firstLevel : _collection)
+            for (Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> firstLayer : _collection)
             {
-                for (Tuple<Long, HistoryRecord> secondLayer : firstLevel.GetY())
+                for (Tuple<Long, List<HistoryRecord>> secondLayer : firstLayer.GetY())
                 {
-                    jsonWriter.beginObject();
+                    for (HistoryRecord record : secondLayer.GetY())
+                    {
+                        jsonWriter.beginObject();
 
-                    HistoryRecord record = secondLayer.GetY();
-                    jsonWriter.name("orderID").value(record.GetID());
-                    jsonWriter.name("type").value(record.GetMethod().ToString());
-                    jsonWriter.name("orderType").value(record.GetType().ToString());
-                    jsonWriter.name("size").value(record.GetSize());
-                    jsonWriter.name("price").value(record.GetPrice());
-                    jsonWriter.name("timestamp").value(record.GetTimestamp() / 1000);
+                        jsonWriter.name("orderID").value(record.GetID());
+                        jsonWriter.name("type").value(record.GetMethod().ToString());
+                        jsonWriter.name("orderType").value(record.GetType().ToString());
+                        jsonWriter.name("size").value(record.GetSize());
+                        jsonWriter.name("price").value(record.GetPrice());
+                        jsonWriter.name("timestamp").value(record.GetTimestamp() / 1000);
 
-                    jsonWriter.endObject();
+                        jsonWriter.endObject();
+                    }
                 }
             }
 

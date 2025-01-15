@@ -120,9 +120,19 @@ public class Utilities
 
     public static long MillisecondsFromString(String dateString, String format) throws ParseException
     {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(format);
-        ZonedDateTime localDateTime = ZonedDateTime.parse(dateString, dateTimeFormatter);
-        Instant instant = localDateTime.toInstant();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format);
+        Date date = simpleDateFormat.parse(dateString);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.DAY_OF_MONTH, 15);
+        return calendar.getTimeInMillis();
+
+        /*
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+        LocalDateTime localDateTime = LocalDateTime.parse(dateString, formatter);
+        ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.of("GMT"));
+        Instant instant = zonedDateTime.toInstant();
         return instant.toEpochMilli();
+        */
     }
 }

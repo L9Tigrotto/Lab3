@@ -124,7 +124,6 @@ public class Test
         System.out.printf("[TEST] %s\n", input);
         RequestHandler.SendInsertLimitOrder(connection, words);
         //scanner.nextLine();
-        */
 
         // ##### STOP BID #####
         input = "insertStopOrder bid 100 1000";
@@ -146,5 +145,6 @@ public class Test
         System.out.printf("[TEST] %s\n", input);
         RequestHandler.SendInsertLimitOrder(connection, words);
         //scanner.nextLine();
+        */
     }
 }
