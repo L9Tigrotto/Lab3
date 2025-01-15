@@ -109,7 +109,7 @@ public class ClientHandler implements Runnable
                     System.out.println("[WARNING] Inactive client detected, closing connection");
 
                     // if a user is associated with this connection, mark them as disconnected.
-                    if (_user != null) { _user.TryLogout(); }
+                    if (_user != null) { UserCollection.TryLogout(_user); }
 
                     _connection.Close();
                     return;
@@ -148,7 +148,7 @@ public class ClientHandler implements Runnable
         SimpleResponse response;
 
         // check if the username is valid (meets length requirements, etc.) and if it is already taken by another user
-        if (!User.IsUsernameValid(username) || UserCollection.Exists(username)) { response = RegisterRequest.USERNAME_NOT_AVAILABLE; }
+        if (!User.IsUsernameValid(username) || UserCollection.IsRegistered(username)) { response = RegisterRequest.USERNAME_NOT_AVAILABLE; }
 
         // check if the provided password meets the minimum length and complexity requirements
         else if (!User.IsPasswordValid(password)) { response = RegisterRequest.INVALID_PASSWORD; }
@@ -182,7 +182,7 @@ public class ClientHandler implements Runnable
         else if (!User.IsPasswordValid(newPassword)) { response = UpdateCredentialsRequest.INVALID_NEWPASSWORD; }
 
         // check if the specified username exists in the system
-        else if (!UserCollection.Exists(username)) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
+        else if (!UserCollection.IsRegistered(username)) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
 
         // attempt to update the user's password
         else
@@ -216,21 +216,19 @@ public class ClientHandler implements Runnable
         if (_user != null) { response = LoginRequest.USER_ALREADY_LOGGED_IN; }
 
         // check if the specified username exists in the system
-        else if (!UserCollection.Exists(username)) { response = LoginRequest.NON_EXISTENT_USER; }
+        else if (!UserCollection.IsRegistered(username)) { response = LoginRequest.NON_EXISTENT_USER; }
 
-        // attempt to log the user in
         else
         {
-            try
-            {
-                User user = UserCollection.FromName(username);
-                response = user.TryLogIn(password);
+            User user = null;
+            try { user = UserCollection.FromName(username); }
+            catch (UserNotRegisteredException e) { SendResponse(LoginRequest.OTHER_ERROR_CASES); return; } // should not happen
 
-                // associate the user object with this client handler if login is successful
-                if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = user; }
-            } catch (UserNotRegisteredException e) { response = LoginRequest.NON_EXISTENT_USER; }
+            response = UserCollection.TryLogin(user, password);
+
+            // associate the user object with this client handler if login is successful
+            if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = user; }
         }
-
 
         SendResponse(response);
     }
@@ -252,10 +250,10 @@ public class ClientHandler implements Runnable
 
         else
         {
-            response = _user.TryLogout();
+            response = UserCollection.TryLogout(_user);
 
             // clear the user reference if logout was successful
-            if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = null; }
+            if (response.GetResponse() == LogoutRequest.OK.GetResponse()) { _user = null; }
         }
 
         SendResponse(response);

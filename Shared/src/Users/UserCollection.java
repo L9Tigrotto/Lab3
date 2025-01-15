@@ -2,6 +2,8 @@
 package Users;
 
 import Helpers.Utilities;
+import Messages.LoginRequest;
+import Messages.LogoutRequest;
 import Messages.RegisterRequest;
 import Messages.SimpleResponse;
 import com.google.gson.FormattingStyle;
@@ -17,15 +19,21 @@ public class UserCollection
 {
     private static final UserCollection _instance = new UserCollection();
 
-    private final ConcurrentHashMap<String, User>_collection;
+    private final ConcurrentHashMap<String, User> _registered;
+    private final ConcurrentHashMap<String, User> _connected;
 
-    private UserCollection() { _collection = new ConcurrentHashMap<>(); }
+    private UserCollection()
+    {
+        _registered = new ConcurrentHashMap<>();
+        _connected = new ConcurrentHashMap<>();
+    }
 
-    private boolean ExistsInternal(String username) { return _collection.containsKey(username); }
+    private boolean IsRegisteredInternal(String username) { return _registered.containsKey(username); }
+    private boolean IsConnectedInternal(String username) { return _connected.containsKey(username); }
 
     private User FromNameInternal(String username) throws UserNotRegisteredException
     {
-        User user = _collection.get(username);
+        User user = _registered.get(username);
         if (user == null) { throw new UserNotRegisteredException(); }
         return user;
     }
@@ -35,10 +43,23 @@ public class UserCollection
         // attempt to insert the new user into the collection. Handle the case where the username is already taken,
         // even though the initial check might have missed it. This could happen due to race conditions
         User user = new User(username, password);
-        if (_collection.putIfAbsent(username, user) != null) { return RegisterRequest.USERNAME_NOT_AVAILABLE; }
+        if (_registered.putIfAbsent(username, user) != null) { return RegisterRequest.USERNAME_NOT_AVAILABLE; }
 
         // if all checks pass and the user is successfully inserted, send an OK response
         return RegisterRequest.OK;
+    }
+
+    public SimpleResponse TryLoginInternal(User user, String password)
+    {
+        if (!user.MatchPassword(password)) { return LoginRequest.USERNAME_PASSWORD_MISMATCH; }
+        else if (_connected.putIfAbsent(user.GetUsername(), user) == null) { return LoginRequest.OK; }
+        else { return LoginRequest.USERNAME_PASSWORD_MISMATCH; }
+    }
+
+    public SimpleResponse TryLogoutInternal(User user)
+    {
+        if (_connected.remove(user.GetUsername()) == null) { return LogoutRequest.USER_NOT_LOGGED; }
+        else { return LogoutRequest.OK; }
     }
 
     private void LoadInternal(String filename) throws IOException
@@ -60,7 +81,7 @@ public class UserCollection
                 String password = Utilities.ReadString(jsonReader, "password");
 
                 // avoid overriding duplicate users (shouldn't be any)
-                _collection.putIfAbsent(name, new User(name, password));
+                _registered.putIfAbsent(name, new User(name, password));
 
                 jsonReader.endObject();
             }
@@ -81,7 +102,7 @@ public class UserCollection
             jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
             jsonWriter.beginArray();
 
-            Set<Map.Entry<String, User>> entrySet = _collection.entrySet();
+            Set<Map.Entry<String, User>> entrySet = _registered.entrySet();
 
             // iterate through user map and write user data to JSON file
             for (Map.Entry<String, User> entry : entrySet) {
@@ -96,9 +117,14 @@ public class UserCollection
     }
 
 
-    public static boolean Exists(String username) { return _instance.ExistsInternal(username); }
+    public static boolean IsRegistered(String username) { return _instance.IsRegisteredInternal(username); }
+    public static boolean IsConnected(String username) { return _instance.IsConnectedInternal(username); }
+
     public static User FromName(String username) throws UserNotRegisteredException { return _instance.FromNameInternal(username); }
     public static SimpleResponse TryRegister(String username, String password) { return _instance.TryRegisterInternal(username, password); }
+    public static SimpleResponse TryLogin(User user, String password) { return _instance.TryLoginInternal(user, password); }
+    public static SimpleResponse TryLogout(User user) { return _instance.TryLogoutInternal(user); }
+
 
     public static void Load(String filename) throws IOException { _instance.LoadInternal(filename); }
     public static void Save(String filename) throws IOException { _instance.SaveInternal(filename); }

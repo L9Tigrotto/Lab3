@@ -72,13 +72,15 @@ public class OrderBook
         long price = 0;
         switch (method)
         {
-            case ASK -> {
+            case ASK ->
+            {
                 synchronized (_askLimitOrders)
                 {
                     if (!_askLimitOrders.isEmpty()) { price = _askLimitOrders.peek().GetPrice(); }
                 }
             }
-            case BID -> {
+            case BID ->
+            {
                 synchronized (_bidLimitOrders)
                 {
                     if (!_bidLimitOrders.isEmpty()) { price = _bidLimitOrders.peek().GetPrice(); }
