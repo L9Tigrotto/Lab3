@@ -89,7 +89,7 @@ public class Main
         System.out.println("6) 'insertLimitOrder <type> <size> <limit>' to insert a limit order");
         System.out.println("7) 'insertStopOrder <type> <size> <stopPrice>' to insert a stop order");
         System.out.println("8) 'cancelOrder <orderID>' to cancel an order");
-        System.out.println("9) 'getPriceHistory <month: Jan, Feb, ...> <year>' to get price history");
+        System.out.println("9) 'getPriceHistory <month> <year>' to get price history");
     }
 
     /**

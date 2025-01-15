@@ -12,7 +12,7 @@ import java.text.ParseException;
 
 public class GetPriceHistoryRequest extends Request
 {
-    public static final String DATE_FORMAT = "MMMyyyy";
+    public static final String DATE_FORMAT = "MMyyyy";
 
     public static final SimpleResponse USER_NOT_LOGGED = new SimpleResponse(101, "user not logged in");
     public static final SimpleResponse OTHER_ERROR_CASES = new SimpleResponse(102, "other_error_cases");

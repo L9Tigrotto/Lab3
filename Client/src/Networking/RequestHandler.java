@@ -398,8 +398,8 @@ public class RequestHandler
         try { int year = Integer.parseInt(words[2]); }
         catch (NumberFormatException e) { System.out.println("[ERROR] <year> is not a number"); return true; }
 
-        // validate the month
-        if (words[1].length() != 3) { System.out.println("[ERROR] <month> is not valid"); return true; }
+        try { int month = Integer.parseInt(words[2]); }
+        catch (NumberFormatException e) { System.out.println("[ERROR] <montgh> is not a number"); return true; }
 
         String formattedTimestamp = String.format("%s%s", words[1], words[2]);
         long timestamp;
