@@ -2,6 +2,7 @@
 package Orders;
 
 import Helpers.Tuple;
+import Messages.ClosedTradesNotification;
 import Users.User;
 
 public abstract class Order
@@ -60,12 +61,15 @@ public abstract class Order
         long price = Math.min(_price, order.GetPrice());
         long size = Math.min(_size, order.GetSize());
 
+        boolean wantToBuy = WantToBuyAt(price);
+        boolean wantToSell = order.WantToSellAt(price);
+
         if (!WantToBuyAt(price) || !order.WantToSellAt(price)) { return new Tuple<>(0L, 0L); }
 
         return new Tuple<>(size, price);
     }
 
-    public boolean TrySellTo(Order order)
+    public boolean TrySellTo(Order order, ClosedTradesNotification notification)
     {
         Tuple<Long, Long> size_price = CanSellTo(order);
         if (size_price.GetX() == 0) { return false; }
@@ -73,7 +77,7 @@ public abstract class Order
         DecreaseSize(size_price);
         order.DecreaseSize(size_price);
 
-        System.out.printf("%s:%s sold (size: %d, price: %d)\n", _type.ToString(), _method.ToString(), size_price.GetX(), size_price.GetY());
+        if (order.IsConsumed()) { notification.Add(order, size_price); }
 
         HistoryRecord record = new HistoryRecord(this, size_price);
         HistoryRecordCollection.Add(record);
@@ -81,7 +85,7 @@ public abstract class Order
         return true;
     }
 
-    public boolean TryBuyFrom(Order order)
+    public boolean TryBuyFrom(Order order, ClosedTradesNotification notification)
     {
         Tuple<Long, Long> size_price = CanBuyFrom(order);
         if (size_price.GetX() == 0) { return false; }
@@ -89,7 +93,7 @@ public abstract class Order
         DecreaseSize(size_price);
         order.DecreaseSize(size_price);
 
-        System.out.printf("%s:%s bought (size: %d, price: %d)\n", _type.ToString(), _method.ToString(), size_price.GetX(), size_price.GetY());
+        if (order.IsConsumed()) { notification.Add(order, size_price); }
 
         HistoryRecord record = new HistoryRecord(this, size_price);
         HistoryRecordCollection.Add(record);

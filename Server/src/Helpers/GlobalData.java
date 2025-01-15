@@ -8,6 +8,8 @@ import Users.User;
 import Users.UserCollection;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.SocketException;
 
 /**
  * This class provides global access to shared data and functionality within the server application.
@@ -22,7 +24,9 @@ public class GlobalData
     public static final ServerSettings SETTINGS;
 
     // the listener object for handling incoming connections
-    public static final Listener LISTENER;
+    public static final Listener TCP_LISTENER;
+
+    public static final DatagramSocket UPD_SOCKET;
 
     // static initializer block to data settings and users at startup
     static
@@ -34,7 +38,14 @@ public class GlobalData
             throw new RuntimeException(e);
         }
 
-        LISTENER = new Listener();
+        TCP_LISTENER = new Listener();
+
+        try { UPD_SOCKET = new DatagramSocket(SETTINGS.SERVER_UDP_PORT);}
+        catch (SocketException e)
+        {
+            System.out.printf("[ERROR] Unable to open UDP socket: %s\n", e.getMessage());
+            throw new RuntimeException(e);
+        }
 
         long lastUsedID;
         try { lastUsedID = HistoryRecordCollection.Load(SETTINGS.OrderHistoryFilename); }

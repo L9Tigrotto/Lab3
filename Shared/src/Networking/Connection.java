@@ -1,9 +1,13 @@
 
 package Networking;
 
+import Helpers.Settings;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.Socket;
 import java.text.ParseException;
 
@@ -14,7 +18,7 @@ import java.text.ParseException;
 public class Connection
 {
     // the underlying Socket object representing the network connection
-    private final Socket _socket;
+    private final Socket _socketTCP;
 
     // a DataInputStream for reading data from the socket's input stream
     private final DataInputStream _dataInputStream;
@@ -22,17 +26,23 @@ public class Connection
     // a DataOutputStream for writing data to the socket's output stream
     private final DataOutputStream _dataOutputStream;
 
+    private final DatagramSocket _socket_UDP;
+    private final int _clientUDPPort;
+
     /**
      * Creates a new Connection object for the specified socket.
      *
-     * @param socket The Socket object representing the network connection.
+     * @param socketTCP The Socket object representing the network connection.
      * @throws IOException If an error occurs while creating the streams.
      */
-    public Connection(Socket socket) throws IOException
+    public Connection(Socket socketTCP, DatagramSocket socket_UDP, int clientUDPPort) throws IOException
     {
-        _socket = socket;
-        _dataInputStream = new DataInputStream(socket.getInputStream());
-        _dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        _socketTCP = socketTCP;
+        _dataInputStream = new DataInputStream(socketTCP.getInputStream());
+        _dataOutputStream = new DataOutputStream(socketTCP.getOutputStream());
+
+        _socket_UDP = socket_UDP;
+        _clientUDPPort = clientUDPPort;
     }
 
     /**
@@ -40,7 +50,7 @@ public class Connection
      *
      * @return True if the socket is closed, false otherwise.
      */
-    public boolean IsClosed() { return _socket.isClosed(); }
+    public boolean IsClosed() { return _socketTCP.isClosed(); }
 
     /**
      * Checks if there is data available to be read from the socket.
@@ -82,6 +92,15 @@ public class Connection
      */
     public void Send(Response response) throws IOException { _dataOutputStream.writeUTF(response.ToJson()); }
 
+    public void SendNotification(String notification)
+    {
+        byte[] buffer = notification.getBytes();
+        DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length, _socketTCP.getInetAddress(), _clientUDPPort);
+
+        try { _socket_UDP.send(datagramPacket); }
+        catch (IOException e) { System.out.println("[ERROR] Unable to send notification"); }
+    }
+
     /**
      * This method ensures proper resource management by closing the input stream,
      * output stream, and the underlying socket.
@@ -92,6 +111,6 @@ public class Connection
     {
         _dataInputStream.close();
         _dataOutputStream.close();
-        _socket.close();
+        _socketTCP.close();
     }
 }

@@ -35,7 +35,7 @@ public class ClientHandler implements Runnable
      */
     public ClientHandler(Socket socket) throws IOException
     {
-        _connection = new Connection(socket);
+        _connection = new Connection(socket, GlobalData.UPD_SOCKET, GlobalData.SETTINGS.CLIENT_UDP_PORT);
         _lastMessageTime = System.currentTimeMillis();
         _user = null;
     }
@@ -51,7 +51,7 @@ public class ClientHandler implements Runnable
         {
             // wait for a request from the client, handle disconnection due inactivity or server shutdown during the wait
             WaitForRequest();
-            if (_connection.IsClosed() || GlobalData.LISTENER.IsStopRequested()) { return; }
+            if (_connection.IsClosed() || GlobalData.TCP_LISTENER.IsStopRequested()) { return; }
 
             try
             {
@@ -97,7 +97,7 @@ public class ClientHandler implements Runnable
     {
         try
         {
-            while(!GlobalData.LISTENER.IsStopRequested() && !_connection.IsDataAvailable())
+            while(!GlobalData.TCP_LISTENER.IsStopRequested() && !_connection.IsDataAvailable())
             {
                 // calculate the elapsed time since the last message was received and check if it exceeds the
                 // inactivity threshold
@@ -224,7 +224,7 @@ public class ClientHandler implements Runnable
             try { user = UserCollection.FromName(username); }
             catch (UserNotRegisteredException e) { SendResponse(LoginRequest.OTHER_ERROR_CASES); return; } // should not happen
 
-            response = UserCollection.TryLogin(user, password);
+            response = UserCollection.TryLogin(user, password, _connection);
 
             // associate the user object with this client handler if login is successful
             if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = user; }

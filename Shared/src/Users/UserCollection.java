@@ -6,6 +6,9 @@ import Messages.LoginRequest;
 import Messages.LogoutRequest;
 import Messages.RegisterRequest;
 import Messages.SimpleResponse;
+import Networking.Connection;
+import Orders.Cart;
+import Orders.Order;
 import com.google.gson.FormattingStyle;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -20,7 +23,7 @@ public class UserCollection
     private static final UserCollection _instance = new UserCollection();
 
     private final ConcurrentHashMap<String, User> _registered;
-    private final ConcurrentHashMap<String, User> _connected;
+    private final ConcurrentHashMap<String, Connection> _connected;
 
     private UserCollection()
     {
@@ -49,10 +52,10 @@ public class UserCollection
         return RegisterRequest.OK;
     }
 
-    public SimpleResponse TryLoginInternal(User user, String password)
+    public SimpleResponse TryLoginInternal(User user, String password, Connection connection)
     {
         if (!user.MatchPassword(password)) { return LoginRequest.USERNAME_PASSWORD_MISMATCH; }
-        else if (_connected.putIfAbsent(user.GetUsername(), user) == null) { return LoginRequest.OK; }
+        else if (_connected.putIfAbsent(user.GetUsername(), connection) == null) { return LoginRequest.OK; }
         else { return LoginRequest.USERNAME_PASSWORD_MISMATCH; }
     }
 
@@ -120,10 +123,20 @@ public class UserCollection
     public static boolean IsRegistered(String username) { return _instance.IsRegisteredInternal(username); }
     public static boolean IsConnected(String username) { return _instance.IsConnectedInternal(username); }
 
+
     public static User FromName(String username) throws UserNotRegisteredException { return _instance.FromNameInternal(username); }
     public static SimpleResponse TryRegister(String username, String password) { return _instance.TryRegisterInternal(username, password); }
-    public static SimpleResponse TryLogin(User user, String password) { return _instance.TryLoginInternal(user, password); }
+    public static SimpleResponse TryLogin(User user, String password, Connection connection) { return _instance.TryLoginInternal(user, password, connection); }
     public static SimpleResponse TryLogout(User user) { return _instance.TryLogoutInternal(user); }
+
+
+    public static void SendNotification(User user, String notification)
+    {
+        Connection connection =  _instance._connected.get(user.GetUsername());
+        if (connection == null) { return; }
+
+        connection.SendNotification(notification);
+    }
 
 
     public static void Load(String filename) throws IOException { _instance.LoadInternal(filename); }

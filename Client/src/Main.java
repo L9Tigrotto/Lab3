@@ -29,10 +29,10 @@ public class Main
 
         // create a connection object
         Connection connection;
-        try { connection = new Connection(socket); }
+        try { connection = new Connection(socket, GlobalData.UPD_SOCKET, GlobalData.SETTINGS.CLIENT_UDP_PORT); }
         catch (IOException e) { System.err.printf("[ERROR] Unable to create connection: %s\n", e.getMessage()); return; }
 
-        // if (true) { Test.Run(connection); return; }
+        if (true) { Test.Run(connection); return; }
 
         // print the available options to the user
         System.out.println("a) 'exit' to exit");
@@ -70,8 +70,13 @@ public class Main
             catch (IOException e) { System.err.printf("[ERROR] Unable to close the connection properly: %s\n", e.getMessage()); }
         }
 
+        GlobalData.NOTIFICATION_THREAD.interrupt();
+
         // save settings
         GlobalData.Save();
+
+        try { GlobalData.NOTIFICATION_THREAD.join(); }
+        catch (InterruptedException e) { throw new RuntimeException(e); }
     }
 
     /**

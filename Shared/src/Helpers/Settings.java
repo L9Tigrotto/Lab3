@@ -16,6 +16,10 @@ public abstract class Settings
     // TCP port of the server
     public int TCP_PORT;
 
+    // UDP port
+    public int CLIENT_UDP_PORT;
+    public int SERVER_UDP_PORT;
+
      // the filename of the configuration file
     private final String _filename;
 
@@ -52,6 +56,8 @@ public abstract class Settings
     {
         TCP_IP = properties.getProperty("TCP_IP");
         TCP_PORT = Integer.parseInt(properties.getProperty("TCP_PORT"));
+        CLIENT_UDP_PORT = Integer.parseInt(properties.getProperty("CLIENT_UDP_PORT"));
+        SERVER_UDP_PORT = Integer.parseInt(properties.getProperty("SERVER_UDP_PORT"));
     }
 
     /**

@@ -2,20 +2,15 @@ package Networking;
 
 public enum OperationType
 {
-    REGISTER(0),
-    UPDATE_CREDENTIALS(1),
-    LOGIN(2),
-    LOGOUT(3),
-    INSERT_MARKET_ORDER(4),
-    INSERT_LIMIT_ORDER(5),
-    INSERT_STOP_ORDER(6),
-    CANCEL_ORDER(7),
-    GET_PRICE_HISTORY(8);
-
-    private final int _value;
-    OperationType(int value) {
-        _value = value;
-    }
+    REGISTER,
+    UPDATE_CREDENTIALS,
+    LOGIN,
+    LOGOUT,
+    INSERT_MARKET_ORDER,
+    INSERT_LIMIT_ORDER,
+    INSERT_STOP_ORDER,
+    CANCEL_ORDER,
+    GET_PRICE_HISTORY;
 
     public String ToString() {
         return switch (this) {

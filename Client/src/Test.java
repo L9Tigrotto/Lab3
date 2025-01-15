@@ -61,28 +61,32 @@ public class Test
         System.out.printf("[TEST] %s\n", input);
         RequestHandler.SendInsertLimitOrder(connection, words);
         //scanner.nextLine();
-
+        */
         // ##### LIMIT ASK #####
         input = "insertLimitOrder ask 20 1000";
         words = input.split(" ");
         System.out.printf("[TEST] %s\n", input);
         RequestHandler.SendInsertLimitOrder(connection, words);
-        //scanner.nextLine();
+        scanner.nextLine();
 
-        // ##### MARKET BID #####
-        input = "insertMarketOrder bid 10";
+        // ##### LIMIT BID #####
+        input = "insertLimitOrder bid 10 1000";
         words = input.split(" ");
         System.out.printf("[TEST] %s\n", input);
-        RequestHandler.SendInsertMarketOrder(connection, words);
-        //scanner.nextLine();
+        RequestHandler.SendInsertLimitOrder(connection, words);
+        scanner.nextLine();
 
-        // ##### MARKET BID #####
-        input = "insertMarketOrder bid 10";
+        // ##### LIMIT BID #####
+        input = "insertLimitOrder bid 10 1000";
         words = input.split(" ");
         System.out.printf("[TEST] %s\n", input);
-        RequestHandler.SendInsertMarketOrder(connection, words);
-        //scanner.nextLine();
+        RequestHandler.SendInsertLimitOrder(connection, words);
 
+
+        System.out.println("asdasdasdsa");
+        scanner.nextLine();
+
+        /*
         // ##### LIMIT BID #####
         input = "insertLimitOrder bid 20 1000";
         words = input.split(" ");

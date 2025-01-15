@@ -14,7 +14,7 @@ public class Main
     public static void main(String[] args) throws IOException
     {
         // start the listener thread to accept connections from clients
-        GlobalData.LISTENER.Start();
+        GlobalData.TCP_LISTENER.Start();
 
         System.out.println("[INFO] Server started, enter 'stop' to stop the server");
 
@@ -34,7 +34,7 @@ public class Main
         }
 
         // stop the listener thread to prevent accepting new connections
-        GlobalData.LISTENER.Stop();
+        GlobalData.TCP_LISTENER.Stop();
 
         // save any server data before exiting
         GlobalData.Save();

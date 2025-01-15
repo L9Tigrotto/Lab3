@@ -1,9 +1,12 @@
 package Orders;
 
+import Helpers.Tuple;
 import Messages.CancelOrderRequest;
+import Messages.ClosedTradesNotification;
 import Messages.OrderResponse;
 import Messages.SimpleResponse;
 import Users.User;
+import Users.UserCollection;
 
 import java.util.List;
 import java.util.PriorityQueue;
@@ -164,8 +167,20 @@ public class OrderBook
                     // them from the bid order list
                     if (cart.IsOrderConsumed())
                     {
-                        List<Order> consumedOrders = cart.SellAll();
-                        for (Order bidOrder : consumedOrders) { _bidLimitOrders.remove(bidOrder); }
+                        Tuple<List<Order>, ClosedTradesNotification> consumedOrders_notification = cart.SellAll();
+                        List<Order> consumedOrders = consumedOrders_notification.GetX();
+                        ClosedTradesNotification notification = consumedOrders_notification.GetY();
+                        notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
+                        notification.Terminate();
+                        String notificationMessage = notification.ToString();
+
+                        for (Order consumedOrder : consumedOrders)
+                        {
+                            _bidLimitOrders.remove(consumedOrder);
+                            UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
+                        }
+
+                        UserCollection.SendNotification(order.GetUser(), notificationMessage);
                     }
                 }
             }
@@ -184,8 +199,20 @@ public class OrderBook
                     // to and remove them from the bid order list
                     if (cart.IsOrderConsumed())
                     {
-                        List<Order> emptyOrders = cart.BuyAll();
-                        for (Order askOrder : emptyOrders) { _askLimitOrders.remove(askOrder); }
+                        Tuple<List<Order>, ClosedTradesNotification> consumedOrders_notification = cart.BuyAll();
+                        List<Order> consumedOrders = consumedOrders_notification.GetX();
+                        ClosedTradesNotification notification = consumedOrders_notification.GetY();
+                        notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
+                        notification.Terminate();
+                        String notificationMessage = notification.ToString();
+
+                        for (Order consumedOrder : consumedOrders)
+                        {
+                            _askLimitOrders.remove(consumedOrder);
+                            UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
+                        }
+
+                        UserCollection.SendNotification(order.GetUser(), notificationMessage);
                     }
                 }
             }
@@ -204,6 +231,9 @@ public class OrderBook
      */
     public static OrderResponse ProcessOrder(LimitOrder order)
     {
+        // create a cart object to track the execution of the limit order
+        Cart cart = order.CreateCart();
+
         switch (order.GetMethod())
         {
             case ASK ->
@@ -211,17 +241,26 @@ public class OrderBook
                 // synchronize access to the bid order list to prevent race conditions
                 synchronized (_bidLimitOrders)
                 {
-                    // iterate through bid orders while there are some and the limit order isn't consumed
-                    while (!_bidLimitOrders.isEmpty() && !order.IsConsumed())
+                    for (Order bidOrder : _bidLimitOrders)
                     {
-                        Order bidOrder = _bidLimitOrders.peek();
-                        if (bidOrder == null) { _bidLimitOrders.poll(); continue; } // should not happen
-
-                        if (!order.TrySellTo(bidOrder)) { break; }
-
-                        // if the bid order is consumed, remove it from the list
-                        if (bidOrder.IsConsumed()) { _bidLimitOrders.poll(); }
+                        if (!cart.CanSellTo(bidOrder)) { break; }
                     }
+
+                    Tuple<List<Order>, ClosedTradesNotification> consumedOrders_notification = cart.SellAll();
+                    List<Order> consumedOrders = consumedOrders_notification.GetX();
+                    ClosedTradesNotification notification = consumedOrders_notification.GetY();
+                    notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
+                    notification.Terminate();
+                    String notificationMessage = notification.ToString();
+
+                    for (Order consumedOrder : consumedOrders)
+                    {
+                        _bidLimitOrders.remove(consumedOrder);
+                        UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
+                    }
+
+                    if (cart.GetConsumedSize() > 0) { UserCollection.SendNotification(order.GetUser(), notificationMessage); }
+
 
                     // if the limit order isn't fully consumed, add it to the ask orders
                     if (!order.IsConsumed())
@@ -244,17 +283,25 @@ public class OrderBook
                 // synchronize access to the ask order list to prevent race conditions
                 synchronized (_askLimitOrders)
                 {
-                    // iterate through ask orders while there are some and the limit order isn't consumed
-                    while (!_askLimitOrders.isEmpty() && !order.IsConsumed())
+                    for (Order askOrder : _askLimitOrders)
                     {
-                        Order askOrder = _askLimitOrders.peek();
-                        if (askOrder == null) { _askLimitOrders.poll(); continue; } // should not happen
-
-                        if (!order.TryBuyFrom(askOrder)) { break; }
-
-                        // if the ask order is consumed, remove it from the list
-                        if (askOrder.IsConsumed()) { _askLimitOrders.poll(); }
+                        if (!cart.CanBuyFrom(askOrder)) { break; }
                     }
+
+                    Tuple<List<Order>, ClosedTradesNotification> consumedOrders_notification = cart.BuyAll();
+                    List<Order> consumedOrders = consumedOrders_notification.GetX();
+                    ClosedTradesNotification notification = consumedOrders_notification.GetY();
+                    notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
+                    notification.Terminate();
+                    String notificationMessage = notification.ToString();
+
+                    for (Order consumedOrder : consumedOrders)
+                    {
+                        _askLimitOrders.remove(consumedOrder);
+                        UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
+                    }
+
+                    if (cart.GetConsumedSize() > 0) { UserCollection.SendNotification(order.GetUser(), notificationMessage); }
 
                     // if the limit order isn't fully consumed, add it to the bid orders
                     if (!order.IsConsumed())
@@ -327,8 +374,20 @@ public class OrderBook
                     // them from the bid order list
                     if (cart.IsOrderConsumed() && cart.GetTotalPrice() <= order.GetStopPrice())
                     {
-                        List<Order> consumedOrders = cart.SellAll();
-                        for (Order bidOrder : consumedOrders) { _bidLimitOrders.remove(bidOrder); }
+                        Tuple<List<Order>, ClosedTradesNotification> consumedOrders_notification = cart.SellAll();
+                        List<Order> consumedOrders = consumedOrders_notification.GetX();
+                        ClosedTradesNotification notification = consumedOrders_notification.GetY();
+                        notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
+                        notification.Terminate();
+                        String notificationMessage = notification.ToString();
+
+                        for (Order consumedOrder : consumedOrders)
+                        {
+                            _bidLimitOrders.remove(consumedOrder);
+                            UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
+                        }
+
+                        UserCollection.SendNotification(order.GetUser(), notificationMessage);
                     }
                 }
             }
@@ -347,8 +406,20 @@ public class OrderBook
                     // to and remove them from the bid order list
                     if (cart.IsOrderConsumed() && cart.GetTotalPrice() >= order.GetStopPrice())
                     {
-                        List<Order> emptyOrders = cart.BuyAll();
-                        for (Order askOrder : emptyOrders) { _askLimitOrders.remove(askOrder); }
+                        Tuple<List<Order>, ClosedTradesNotification> consumedOrders_notification = cart.BuyAll();
+                        List<Order> consumedOrders = consumedOrders_notification.GetX();
+                        ClosedTradesNotification notification = consumedOrders_notification.GetY();
+                        notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
+                        notification.Terminate();
+                        String notificationMessage = notification.ToString();
+
+                        for (Order consumedOrder : consumedOrders)
+                        {
+                            _askLimitOrders.remove(consumedOrder);
+                            UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
+                        }
+
+                        UserCollection.SendNotification(order.GetUser(), notificationMessage);
                     }
                 }
             }
