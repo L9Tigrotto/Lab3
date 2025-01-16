@@ -18,13 +18,13 @@ import java.text.ParseException;
  */
 public class ClientHandler implements Runnable
 {
-    // the connection object for communication with the client
+    // the connection object for communication with the client (handles both TCP and UDP)
     private final Connection _connection;
 
-    // tracks the timestamp of the last received message from the client
+    // tracks the timestamp of the last received message from the client for inactivity detection
     private long _lastMessageTime;
 
-    // the User object associated with this client, if authenticated
+    // the User object associated with this client, if authenticated.
     private User _user;
 
     /**
@@ -37,7 +37,7 @@ public class ClientHandler implements Runnable
     {
         _connection = new Connection(socket, GlobalData.UPD_SOCKET, GlobalData.SETTINGS.CLIENT_UDP_PORT);
         _lastMessageTime = System.currentTimeMillis();
-        _user = null;
+        _user = null;  // initially no user is logged in
     }
 
     /**
@@ -99,8 +99,8 @@ public class ClientHandler implements Runnable
         {
             while(!GlobalData.TCP_LISTENER.IsStopRequested() && !_connection.IsDataAvailable())
             {
-                // calculate the elapsed time since the last message was received and check if it exceeds the
-                // inactivity threshold
+                // calculate the elapsed time since the last message was received and check if
+                // it exceeds the inactivity threshold
                 long elapsedTime = System.currentTimeMillis() - _lastMessageTime;
                 boolean terminate = elapsedTime > GlobalData.SETTINGS.ClientInactiveThresholdMS;
 
@@ -108,13 +108,14 @@ public class ClientHandler implements Runnable
                 {
                     System.out.println("[WARNING] Inactive client detected, closing connection");
 
-                    // if a user is associated with this connection, mark them as disconnected.
+                    // if a user is associated with this connection, mark them as disconnected
                     if (_user != null) { UserCollection.TryLogout(_user); }
 
                     _connection.Close();
                     return;
                 }
 
+                // sleep and check again
                 Thread.sleep(GlobalData.SETTINGS.WaitDataTimeoutMS);
             }
         }
@@ -122,6 +123,12 @@ public class ClientHandler implements Runnable
         catch (IOException e) { System.out.printf("[ERROR] Checking if any data is available: %s\n", e.getMessage()); }
     }
 
+    /**
+     * Sends the provided response back to the client.
+     *
+     * @param response The response object to be sent to the client.
+     * @throws IOException If an I/O error occurs while sending the response.
+     */
     private void SendResponse(Response response) throws IOException
     {
         try { _connection.Send(response); }
@@ -147,13 +154,9 @@ public class ClientHandler implements Runnable
         String password = register.GetPassword();
         SimpleResponse response;
 
-        // check if the username is valid (meets length requirements, etc.) and if it is already taken by another user
+        // check if the username is valid and available
         if (!User.IsUsernameValid(username) || UserCollection.IsRegistered(username)) { response = RegisterRequest.USERNAME_NOT_AVAILABLE; }
-
-        // check if the provided password meets the minimum length and complexity requirements
         else if (!User.IsPasswordValid(password)) { response = RegisterRequest.INVALID_PASSWORD; }
-
-        // attempt to register the user and get the response
         else { response = UserCollection.TryRegister(username, password); }
 
         SendResponse(response);
@@ -175,13 +178,9 @@ public class ClientHandler implements Runnable
         String newPassword = request.GetNewPassword();
         SimpleResponse response;
 
-        // check if the user is already logged in on this connection
+        // check if the user is logged in and if the new password is valid.
         if (_user != null) { response = UpdateCredentialsRequest.USER_LOGGED_IN; }
-
-        // check if the new password meets the minimum length and complexity requirements
         else if (!User.IsPasswordValid(newPassword)) { response = UpdateCredentialsRequest.INVALID_NEWPASSWORD; }
-
-        // check if the specified username exists in the system
         else if (!UserCollection.IsRegistered(username)) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
 
         // attempt to update the user's password
@@ -212,12 +211,9 @@ public class ClientHandler implements Runnable
         String password = request.GetPassword();
         SimpleResponse response;
 
-        // check if the user is already logged in on this connection
+        // check if the user is already logged in
         if (_user != null) { response = LoginRequest.USER_ALREADY_LOGGED_IN; }
-
-        // check if the specified username exists in the system
         else if (!UserCollection.IsRegistered(username)) { response = LoginRequest.NON_EXISTENT_USER; }
-
         else
         {
             User user = null;
@@ -226,7 +222,7 @@ public class ClientHandler implements Runnable
 
             response = UserCollection.TryLogin(user, password, _connection);
 
-            // associate the user object with this client handler if login is successful
+            // if login is successful, associate the user with the handler.
             if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = user; }
         }
 
