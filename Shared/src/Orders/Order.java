@@ -61,9 +61,6 @@ public abstract class Order
         long price = Math.min(_price, order.GetPrice());
         long size = Math.min(_size, order.GetSize());
 
-        boolean wantToBuy = WantToBuyAt(price);
-        boolean wantToSell = order.WantToSellAt(price);
-
         if (!WantToBuyAt(price) || !order.WantToSellAt(price)) { return new Tuple<>(0L, 0L); }
 
         return new Tuple<>(size, price);

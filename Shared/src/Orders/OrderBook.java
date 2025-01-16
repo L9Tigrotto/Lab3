@@ -268,11 +268,12 @@ public class OrderBook
                         synchronized (_askLimitOrders) { _askLimitOrders.add(order); }
                         synchronized (_bidStopOrders)
                         {
-                            if (!_bidStopOrders.isEmpty())
+                            while (!_bidStopOrders.isEmpty())
                             {
                                 StopOrder bidOrder = _bidStopOrders.peek();
                                 TryProcessStopOrder(bidOrder);
-                                if (bidOrder.IsConsumed()) { _bidStopOrders.remove(bidOrder); }
+                                if (order.IsConsumed()) { _bidStopOrders.remove(bidOrder); }
+                                else { break; }
                             }
                         }
                     }
@@ -309,11 +310,12 @@ public class OrderBook
                         synchronized (_bidLimitOrders) { _bidLimitOrders.add(order); }
                         synchronized (_askStopOrders)
                         {
-                            if (!_askStopOrders.isEmpty())
+                            while (!_askStopOrders.isEmpty())
                             {
                                 StopOrder askOrder = _askStopOrders.peek();
                                 TryProcessStopOrder(askOrder);
                                 if (askOrder.IsConsumed()) { _askStopOrders.remove(askOrder); }
+                                else { break; }
                             }
                         }
                     }

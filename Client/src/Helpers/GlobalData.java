@@ -41,7 +41,7 @@ public class GlobalData
 
         NOTIFICATION_THREAD = new Thread(() ->
         {
-            byte[] receiveBuffer = new byte[5 * 1024 * 1024]; // 5 MB
+            byte[] receiveBuffer = new byte[512 * 1024]; // 512 KB
             DatagramPacket datagramPacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
             while (!Thread.currentThread().isInterrupted())
             {
