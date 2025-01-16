@@ -9,6 +9,12 @@ import Users.User;
 import java.io.IOException;
 import java.text.ParseException;
 
+/**
+ * The RequestHandler class manages user requests and communication with the server.
+ * It handles registration, login, logout, and order placement (market, limit, stop)
+ * while ensuring proper validation and user authentication.
+ * Responses from the server are processed and printed to the console.
+ */
 public class RequestHandler
 {
     // stores the currently logged-in user
@@ -69,7 +75,7 @@ public class RequestHandler
             return true;
         }
 
-        // check if a user is already logged in, prevent multiple registrations
+        // prevent multiple registrations when a user is already logged in
         if (_user != null)
         {
             System.out.println("[WARNING] It's not possible to send a registration request if you are already logged in");
@@ -102,7 +108,7 @@ public class RequestHandler
             return true;
         }
 
-        // check if a user is logged in to update credentials
+        // check if the user is logged in, as credentials can only be updated when not logged in
         if (_user != null)
         {
             System.out.println("[WARNING] It's not possible to send an update credential request if you are already logged in");
@@ -125,7 +131,7 @@ public class RequestHandler
      *
      * @param connection The connection to the server.
      * @param words An array of strings containing the command and arguments.
-     * @return True the connection is still alive, false otherwise.
+     * @return True if the connection is still alive, false otherwise.
      */
     public static boolean SendLogin(Connection connection, String[] words)
     {
@@ -136,7 +142,7 @@ public class RequestHandler
             return true;
         }
 
-        // check if a user is already logged in, prevent multiple logins
+        // prevent multiple logins when a user is already logged in
         if (_user != null)
         {
             System.out.println("[WARNING] It's not possible to send a login request if you are already logged in");
@@ -161,7 +167,7 @@ public class RequestHandler
      *
      * @param connection The connection to the server.
      * @param words An array of strings containing the command and arguments.
-     * @return True the connection is still alive, false otherwise.
+     * @return True if the connection is still alive, false otherwise.
      */
     public static boolean SendLogout(Connection connection, String[] words)
     {
@@ -172,7 +178,7 @@ public class RequestHandler
             return true;
         }
 
-        // check if a user is logged in before attempting logout
+        // ensure a user is logged in before attempting logout
         if (_user == null)
         {
             System.out.println("[WARNING] It's not possible to send a logout request if you are not logged in");
@@ -181,7 +187,7 @@ public class RequestHandler
 
         String username = words[1];
 
-        // check if the provided username matches the logged-in user
+        // ensure the provided username matches the logged-in user
         if (!username.equals(_user.GetUsername()))
         {
             System.out.println("[ERROR] username does not match");
@@ -192,6 +198,7 @@ public class RequestHandler
         SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, logout);
         if (response == null) { return false; }
 
+        // log out successfully if the response indicates so
         if (response.GetResponse() == LogoutRequest.OK.GetResponse()) { _user = null; }
         PrintResponse(response);
         return true;
@@ -213,16 +220,16 @@ public class RequestHandler
             return true;
         }
 
-        // check if a user is logged in to place orders
+        // check if the user is logged in to place orders
         if (_user == null)
         {
             System.out.println("[WARNING] It's not possible to send an insert market order request if you are not logged in");
             return true;
         }
 
-        // validate the order type (bid or ask)
-        Method type = Method.FromString(words[1]);
-        if (type == null)
+        // validate the order method (bid or ask)
+        Method method = Method.FromString(words[1]);
+        if (method == null)
         {
             System.out.println("[ERROR] <type> must be one of: bid, ask");
             return true;
@@ -230,11 +237,10 @@ public class RequestHandler
 
         // validate the order size (number)
         long size;
-
         try { size = Long.parseLong(words[2]); }
         catch (NumberFormatException e) { System.out.println("[ERROR] <size> is not a number"); return true; }
 
-        MarketOrderRequest request = new MarketOrderRequest(type, size);
+        MarketOrderRequest request = new MarketOrderRequest(method, size);
         OrderResponse response = (OrderResponse) SendAndWaitResponse(connection, request);
         if (response == null) { return false; }
 
@@ -258,16 +264,16 @@ public class RequestHandler
             return true;
         }
 
-        // check if a user is logged in to place orders
+        // check if the user is logged in to place orders
         if (_user == null)
         {
             System.out.println("[WARNING] It's not possible to send an insert limit order request if you are not logged in");
             return true;
         }
 
-        // validate the order type (bid or ask)
-        Method type = Method.FromString(words[1]);
-        if (type == null)
+        // Validate the order method (bid or ask)
+        Method method = Method.FromString(words[1]);
+        if (method == null)
         {
             System.out.println("[ERROR] <type> must be one of: bid, ask");
             return true;
@@ -286,7 +292,7 @@ public class RequestHandler
             return true;
         }
 
-        LimitOrderRequest request = new LimitOrderRequest(type, size, limit);
+        LimitOrderRequest request = new LimitOrderRequest(method, size, limit);
         OrderResponse response = (OrderResponse) SendAndWaitResponse(connection, request);
         if (response == null) { return false; }
 
@@ -310,16 +316,16 @@ public class RequestHandler
             return true;
         }
 
-        // check if a user is logged in to place orders
+        // check if the user is logged in to place orders
         if (_user == null)
         {
             System.out.println("[WARNING] It's not possible to send an insert stop order request if you are not logged in");
             return true;
         }
 
-        // validate the order type (bid or ask)
-        Method type = Method.FromString(words[1]);
-        if (type == null)
+        // validate the order method (bid or ask)
+        Method method = Method.FromString(words[1]);
+        if (method == null)
         {
             System.out.println("[ERROR] <type> must be one of: bid, ask");
             return true;
@@ -334,7 +340,7 @@ public class RequestHandler
         try { stopPrice = Long.parseLong(words[3]); }
         catch (NumberFormatException e) { System.out.println("[ERROR] <stopPrice> is not a number"); return true; }
 
-        StopOrderRequest request = new StopOrderRequest(type, size, stopPrice);
+        StopOrderRequest request = new StopOrderRequest(method, size, stopPrice);
         OrderResponse response = (OrderResponse) SendAndWaitResponse(connection, request);
         if (response == null) { return false; }
 
@@ -358,7 +364,7 @@ public class RequestHandler
             return true;
         }
 
-        // check if a user is logged in to place orders
+        // check if the user is logged in to cancel orders
         if (_user == null)
         {
             System.out.println("[WARNING] It's not possible to send an insert limit order request if you are not logged in");
@@ -378,16 +384,25 @@ public class RequestHandler
         return true;
     }
 
+    /**
+     * Handles a request to retrieve price history for a specific month and year.
+     * Ensures the user is logged in and validates the command arguments before sending
+     * the request to the server. Prints the response to the console.
+     *
+     * @param connection The connection to the server.
+     * @param words An array of strings containing the command and arguments.
+     * @return True if the connection is still alive, false otherwise.
+     */
     public static boolean SendGetPriceHistory(Connection connection, String[] words)
     {
-        // check for correct number of arguments for cancelOrder command
+        // check for correct number of arguments for getPriceHistory command
         if (words.length != 3)
         {
             System.out.println("[INFO] Usage: getPriceHistory <month: Jan, Feb, ...> <year>");
             return true;
         }
 
-        // check if a user is logged in to place orders
+        // check if the user is logged in to place orders
         if (_user == null)
         {
             System.out.println("[WARNING] It's not possible to send get price history request if you are not logged in");
@@ -398,6 +413,7 @@ public class RequestHandler
         try { int year = Integer.parseInt(words[2]); }
         catch (NumberFormatException e) { System.out.println("[ERROR] <year> is not a number"); return true; }
 
+        // validate the month (number)
         try { int month = Integer.parseInt(words[2]); }
         catch (NumberFormatException e) { System.out.println("[ERROR] <montgh> is not a number"); return true; }
 
