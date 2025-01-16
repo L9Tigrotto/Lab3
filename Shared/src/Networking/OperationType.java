@@ -1,17 +1,29 @@
+
 package Networking;
 
+/**
+ * This enum defines the different types of operations that can be performed in the system.
+ * These operations represent various actions such as user registration, login, order management, and retrieving price history.
+ */
 public enum OperationType
 {
-    REGISTER,
-    UPDATE_CREDENTIALS,
-    LOGIN,
-    LOGOUT,
-    INSERT_MARKET_ORDER,
-    INSERT_LIMIT_ORDER,
-    INSERT_STOP_ORDER,
-    CANCEL_ORDER,
-    GET_PRICE_HISTORY;
+    // The operations available in the system.
+    REGISTER,              // Represents user registration.
+    UPDATE_CREDENTIALS,    // Represents updating user credentials (password change).
+    LOGIN,                 // Represents user login.
+    LOGOUT,                // Represents user logout.
+    INSERT_MARKET_ORDER,   // Represents inserting a market order.
+    INSERT_LIMIT_ORDER,    // Represents inserting a limit order.
+    INSERT_STOP_ORDER,     // Represents inserting a stop order.
+    CANCEL_ORDER,          // Represents canceling an order.
+    GET_PRICE_HISTORY;     // Represents retrieving price history.
 
+    /**
+     * Converts the enum value to its corresponding string representation.
+     * This method is useful for serializing the enum value into a string for transmission.
+     *
+     * @return A string representing the operation type.
+     */
     public String ToString() {
         return switch (this) {
             case REGISTER -> "register";
@@ -26,6 +38,13 @@ public enum OperationType
         };
     }
 
+    /**
+     * Converts a string into its corresponding enum value.
+     * This method is used to parse a string into an `OperationType` for handling operations based on user input or requests.
+     *
+     * @param text The string representing the operation type.
+     * @return The corresponding `OperationType` enum value, or `null` if no match is found.
+     */
     public static OperationType FromString(String text)
     {
         return switch (text) {

@@ -12,9 +12,9 @@ import java.io.StringWriter;
 import java.text.ParseException;
 
 /**
- * This class defines an abstract base class for network requests in JSON format.
- * It provides a foundation for building different types of network requests
- * that can be serialized and deserialized using JSON.
+ * This abstract class represents a network request that can be serialized to and deserialized from JSON format.
+ * The requests can be used to perform various operations in the system. Each request includes an operation type
+ * and specific content that will be serialized into a JSON object.
  */
 public abstract class Request
 {
@@ -22,33 +22,37 @@ public abstract class Request
     private final OperationType _operation;
 
     /**
-     * Constructor that takes the operation type of the request.
+     * Constructor to create a new request with the specified operation type.
      *
-     * @param operation The operation type of the request.
+     * @param operation The type of operation this request represents (e.g., REGISTER, LOGIN).
      */
     public Request(OperationType operation) { _operation = operation; }
 
+    /**
+     * Gets the operation type associated with this request.
+     *
+     * @return The operation type of the request.
+     */
     public OperationType GetOperation() { return _operation; }
 
     /**
-     * Converts the request object to a well-formatted JSON string using Gson.
-     * This method serializes the request object into a JSON structure with
-     * the following format:
+     * Converts the request object into a well-formatted JSON string.
+     * The request is serialized into a JSON structure, which includes an "operation" field and a "values" field.
+     * The "values" field is populated with the content specific to the type of request.
      *
-     * ```json
+     * The general structure of the serialized JSON will look like:
      * {
      *   "operation": "<operation_type>",
      *   "values": {
-     *     // Specific content serialized by SerializeContent
+     *     // Specific content serialized by the SerializeContent method
      *   }
      * }
-     * ```
      *
-     * Subclasses must implement the `SerializeContent` method to serialize
-     * their specific content into the "values" object within the JSON string.
+     * Subclasses of this class must implement the `SerializeContent` method to serialize their own specific content
+     * into the "values" object within the JSON string.
      *
-     * @return The JSON string representation of the request object.
-     * @throws IOException If an error occurs during JSON serialization.
+     * @return A string representing the JSON-formatted request.
+     * @throws IOException If an error occurs during the serialization process.
      */
     public String ToJson() throws IOException
     {
@@ -58,7 +62,10 @@ public abstract class Request
             jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
             jsonWriter.beginObject();
 
+            // serialize the operation type as the "operation" field in JSON
             jsonWriter.name("operation").value(_operation.ToString());
+
+            // serialize the specific content of the request under the "values" field
             jsonWriter.name("values");
             jsonWriter.beginObject();
             SerializeContent(jsonWriter);
@@ -71,22 +78,27 @@ public abstract class Request
     }
 
     /**
-     * Abstract method that subclasses must implement to serialize their
-     * specific content into the JSON object under the "values" key.
+     * Abstract method that must be implemented by subclasses to serialize the specific content of the request.
+     * The content will be serialized inside the "values" field of the JSON structure.
      *
-     * @param jsonWriter The JsonWriter object used for serialization.
-     * @throws IOException If an error occurs during JSON serialization.
+     * @param jsonWriter The JsonWriter object used to write the content into the JSON.
+     * @throws IOException If an error occurs during the serialization process.
      */
     protected abstract void SerializeContent(JsonWriter jsonWriter) throws IOException;
 
     /**
-     * Parses a JSON string representing a network request and returns a
-     * corresponding Request object. This static method deserializes the JSON
-     * string based on the "operation" type specified in the JSON.
+     * Deserializes a JSON string representing a network request and returns the corresponding Request object.
+     * This static method reads the JSON string, identifies the operation type, and constructs the corresponding
+     * request object by calling the appropriate deserialization method for the specific request type.
      *
-     * @param json The JSON string representing the network request.
-     * @return The Request object corresponding to the JSON string.
-     * @throws IOException If an error occurs during JSON deserialization.
+     * The general process is:
+     * - Read the "operation" field and determine which type of request is being represented.
+     * - Based on the operation type, call the deserialization method for that request type.
+     *
+     * @param json The JSON string representing a network request.
+     * @return The deserialized Request object.
+     * @throws IOException If an error occurs during JSON parsing or deserialization.
+     * @throws ParseException If an error occurs during parsing the JSON.
      */
     public static Request FromJson(String json) throws IOException, ParseException
     {
@@ -98,18 +110,18 @@ public abstract class Request
         {
             jsonReader.beginObject();
 
-            // read the "operation" field
+            // Read the "operation" field to determine the type of request
             temp = jsonReader.nextName();
-            if (!temp.equals("operation")) { throw new IOException("Supposed to read 'operation' name from JSON (got " + temp + ")"); }
+            if (!temp.equals("operation")) { throw new IOException("Expected 'operation' name from JSON (got " + temp + ")"); }
             OperationType operation = OperationType.FromString(jsonReader.nextString());
             if (operation == null) { throw new IOException("Invalid operation from JSON (got " + temp + ")"); }
 
-            // read the "values" field
+            // read the "values" field that contains the specific content for the request
             temp = jsonReader.nextName();
-            if (!temp.equals("values")) { throw new IOException("Supposed to read 'values' name from JSON (got " + temp + ")"); }
+            if (!temp.equals("values")) { throw new IOException("Expected 'values' name from JSON (got " + temp + ")"); }
             jsonReader.beginObject();
 
-            // handle different operation types
+            // handle different request types based on the operation field
             switch (operation) {
                 case REGISTER -> request = RegisterRequest.DeserializeContent(jsonReader);
                 case UPDATE_CREDENTIALS -> request = UpdateCredentialsRequest.DeserializeContent(jsonReader);
