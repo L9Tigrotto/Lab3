@@ -5,8 +5,12 @@ import java.io.*;
 import java.util.Properties;
 
 /**
- * This class represents a base class for loading and saving settings from/to a configuration file.
- * Subclasses can extend this class and override the Load method to handle specific settings.
+ * This class provides a base for loading and saving configuration settings
+ * from and to a properties file. Subclasses can extend this class and override
+ * the `Load` method to handle specific settings according to their needs.
+ *
+ * The base settings include TCP and UDP configuration values like server IP,
+ * server port, multicast IP, and multicast port.
  */
 public abstract class Settings
 {
@@ -16,11 +20,11 @@ public abstract class Settings
     // TCP port of the server
     public int TCP_PORT;
 
-    // UDP port for the client
-    public int CLIENT_UDP_PORT;
+    // multicast IP address
+    public String MULTICAST_IP;
 
-    // UDP port for the server
-    public int SERVER_UDP_PORT;
+    // multicast port
+    public int MULTICAST_PORT;
 
     // the filename of the configuration file
     private final String _filename;
@@ -65,8 +69,8 @@ public abstract class Settings
     {
         TCP_IP = properties.getProperty("TCP_IP");
         TCP_PORT = Integer.parseInt(properties.getProperty("TCP_PORT"));
-        CLIENT_UDP_PORT = Integer.parseInt(properties.getProperty("CLIENT_UDP_PORT"));
-        SERVER_UDP_PORT = Integer.parseInt(properties.getProperty("SERVER_UDP_PORT"));
+        MULTICAST_IP = properties.getProperty("MULTICAST_IP");
+        MULTICAST_PORT = Integer.parseInt(properties.getProperty("MULTICAST_PORT"));
     }
 
     /**

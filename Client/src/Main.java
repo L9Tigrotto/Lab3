@@ -6,7 +6,6 @@ import Networking.RequestHandler;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.text.ParseException;
 import java.util.Scanner;
 
 /**
@@ -29,10 +28,10 @@ public class Main
 
         // create a connection object
         Connection connection;
-        try { connection = new Connection(socket, GlobalData.UPD_SOCKET, GlobalData.SETTINGS.CLIENT_UDP_PORT); }
+        try { connection = new Connection(socket, null,  GlobalData.SETTINGS.MULTICAST_IP,GlobalData.SETTINGS.MULTICAST_PORT); }
         catch (IOException e) { System.err.printf("[ERROR] Unable to create connection: %s\n", e.getMessage()); return; }
 
-        if (true) { Test.Run(connection); return; }
+        // if (true) { Test.Run(connection); return; }
 
         // print the available options to the user
         System.out.println("a) 'exit' to exit");

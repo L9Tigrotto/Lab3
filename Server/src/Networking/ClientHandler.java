@@ -2,6 +2,7 @@
 package Networking;
 
 import Helpers.GlobalData;
+import Helpers.Tuple;
 import Messages.*;
 import Orders.*;
 import Users.User;
@@ -11,6 +12,7 @@ import Users.UserNotRegisteredException;
 import java.io.IOException;
 import java.net.Socket;
 import java.text.ParseException;
+import java.util.List;
 
 /**
  * This class represents a handler for a connected client. It is responsible for receiving requests from the client,
@@ -35,7 +37,7 @@ public class ClientHandler implements Runnable
      */
     public ClientHandler(Socket socket) throws IOException
     {
-        _connection = new Connection(socket, GlobalData.UPD_SOCKET, GlobalData.SETTINGS.CLIENT_UDP_PORT);
+        _connection = new Connection(socket, GlobalData.SOCKET_UDP, GlobalData.SETTINGS.MULTICAST_IP, GlobalData.SETTINGS.MULTICAST_PORT);
         _lastMessageTime = System.currentTimeMillis();
         _user = null;  // initially no user is logged in
     }
@@ -255,54 +257,80 @@ public class ClientHandler implements Runnable
         SendResponse(response);
     }
 
+    /**
+     * Handles an InsertMarketOrderRequest from the client.
+     * Attempts to place a market order and sends a response.
+     */
     private void HandleInsertMarketOrderRequest(MarketOrderRequest request) throws IOException
     {
-        OrderResponse response;
+        Tuple<OrderResponse, String> response_message;
 
         // check if the user is currently logged in
-        if (_user == null) { response = OrderResponse.INVALID; }
+        if (_user == null) { SendResponse(OrderResponse.INVALID); }
 
         else
         {
             MarketOrder order = GlobalData.CreateMarketOrder(request, _user);
-            response = OrderBook.ProcessOrder(order);
-        }
+            response_message = OrderBook.ProcessOrder(order);
+            SendResponse(response_message.GetX());
 
-        SendResponse(response);
+            // send any notifications related to the order
+            if (!response_message.GetY().isEmpty()) { _connection.SendNotification(response_message.GetY()); }
+        }
     }
 
+    /**
+     * Handles an InsertLimitOrderRequest from the client.
+     * Attempts to place a limit order and sends a response.
+     */
     private void HandleInsertLimitOrderRequest(LimitOrderRequest request) throws IOException
     {
-        OrderResponse response;
+        Tuple<OrderResponse, List<String>> response_message;
 
         // check if the user is currently logged in
-        if (_user == null) { response = OrderResponse.INVALID; }
+        if (_user == null) { SendResponse(OrderResponse.INVALID); }
 
         else
         {
             LimitOrder order = GlobalData.CreateLimitOrder(request, _user);
-            response = OrderBook.ProcessOrder(order);
-        }
+            response_message = OrderBook.ProcessOrder(order);
 
-        SendResponse(response);
+            SendResponse(response_message.GetX());
+
+            // send any notifications related to the order
+            for (String message : response_message.GetY())
+            {
+                if (!response_message.GetY().isEmpty()) { _connection.SendNotification(message); }
+            }
+        }
     }
 
+    /**
+     * Handles an InsertStopOrderRequest from the client.
+     * Attempts to place a stop order and sends a response.
+     */
     private void HandleInsertStopOrderRequest(StopOrderRequest request) throws IOException
     {
-        OrderResponse response;
+        Tuple<OrderResponse, String> response_message;
 
         // check if the user is currently logged in
-        if (_user == null) { response = OrderResponse.INVALID; }
+        if (_user == null) { SendResponse(OrderResponse.INVALID); }
 
         else
         {
             StopOrder order = GlobalData.CreateStopOrder(request, _user);
-            response = OrderBook.ProcessOrder(order);
-        }
+            response_message = OrderBook.ProcessOrder(order);
+            SendResponse(response_message.GetX());
 
-        SendResponse(response);
+            // send any notifications related to the order
+            if (!response_message.GetY().isEmpty()) { _connection.SendNotification(response_message.GetY()); }
+        }
     }
 
+    /**
+     * Handles a CancelOrderRequest from the client.
+     * Attempts to cancel an existing order and sends a response.
+     */
     private void HandleCancelOrderRequest(CancelOrderRequest request) throws IOException
     {
         SimpleResponse response;
@@ -315,6 +343,10 @@ public class ClientHandler implements Runnable
         SendResponse(response);
     }
 
+    /**
+     * Handles a GetPriceHistoryRequest from the client.
+     * Sends the price history for the requested asset.
+     */
     private void HandleGetPriceHistoryRequest(GetPriceHistoryRequest request) throws IOException
     {
         SimpleResponse response;

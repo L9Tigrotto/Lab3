@@ -26,7 +26,7 @@ public class GlobalData
     // the listener object for handling incoming connections
     public static final Listener TCP_LISTENER;
 
-    public static final DatagramSocket UPD_SOCKET;
+    public static final DatagramSocket SOCKET_UDP;
 
     // static initializer block to data settings and users at startup
     static
@@ -40,10 +40,10 @@ public class GlobalData
 
         TCP_LISTENER = new Listener();
 
-        try { UPD_SOCKET = new DatagramSocket(SETTINGS.SERVER_UDP_PORT);}
+        try { SOCKET_UDP = new DatagramSocket(); }
         catch (SocketException e)
         {
-            System.out.printf("[ERROR] Unable to open UDP socket: %s\n", e.getMessage());
+            System.out.printf("[ERROR] Unable to open socket: %s\n", e.getMessage());
             throw new RuntimeException(e);
         }
 

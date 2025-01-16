@@ -8,6 +8,7 @@ import Messages.SimpleResponse;
 import Users.User;
 import Users.UserCollection;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -145,10 +146,11 @@ public class OrderBook
      * @param order The market order to process.
      * @return The result of processing the order.
      */
-    public static OrderResponse ProcessOrder(MarketOrder order)
+    public static Tuple<OrderResponse, String> ProcessOrder(MarketOrder order)
     {
         // create a cart object to track the execution of the market order
         Cart cart = order.CreateCart();
+        String notificationMessage = "";
 
         switch (order.GetMethod())
         {
@@ -172,15 +174,10 @@ public class OrderBook
                         ClosedTradesNotification notification = consumedOrders_notification.GetY();
                         notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
                         notification.Terminate();
-                        String notificationMessage = notification.ToString();
+                        notificationMessage = notification.ToString();
+                        notification.Close();
 
-                        for (Order consumedOrder : consumedOrders)
-                        {
-                            _bidLimitOrders.remove(consumedOrder);
-                            UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
-                        }
-
-                        UserCollection.SendNotification(order.GetUser(), notificationMessage);
+                        for (Order consumedOrder : consumedOrders) { _bidLimitOrders.remove(consumedOrder); }
                     }
                 }
             }
@@ -204,23 +201,18 @@ public class OrderBook
                         ClosedTradesNotification notification = consumedOrders_notification.GetY();
                         notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
                         notification.Terminate();
-                        String notificationMessage = notification.ToString();
+                        notificationMessage = notification.ToString();
+                        notification.Close();
 
-                        for (Order consumedOrder : consumedOrders)
-                        {
-                            _askLimitOrders.remove(consumedOrder);
-                            UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
-                        }
-
-                        UserCollection.SendNotification(order.GetUser(), notificationMessage);
+                        for (Order consumedOrder : consumedOrders) { _askLimitOrders.remove(consumedOrder); }
                     }
                 }
             }
         }
 
         // return success if the market order is consumed, otherwise return failure
-        if (cart.IsOrderConsumed()) { return new OrderResponse(order.GetID()); }
-        else { return OrderResponse.INVALID; }
+        if (cart.IsOrderConsumed()) { return new Tuple<>(new OrderResponse(order.GetID()), notificationMessage); }
+        else { return new Tuple<>(OrderResponse.INVALID, notificationMessage); }
     }
 
     /**
@@ -229,10 +221,11 @@ public class OrderBook
      * @param order The limit order to process.
      * @return The result of processing the order.
      */
-    public static OrderResponse ProcessOrder(LimitOrder order)
+    public static Tuple<OrderResponse, List<String>> ProcessOrder(LimitOrder order)
     {
         // create a cart object to track the execution of the limit order
         Cart cart = order.CreateCart();
+        List<String> notificationMessages = new ArrayList<>();
 
         switch (order.GetMethod())
         {
@@ -249,18 +242,13 @@ public class OrderBook
                     Tuple<List<Order>, ClosedTradesNotification> consumedOrders_notification = cart.SellAll();
                     List<Order> consumedOrders = consumedOrders_notification.GetX();
                     ClosedTradesNotification notification = consumedOrders_notification.GetY();
-                    notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
+
+                    if (cart.GetConsumedSize() > 0) { notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice())); }
                     notification.Terminate();
-                    String notificationMessage = notification.ToString();
+                    if (!consumedOrders.isEmpty()) { notificationMessages.add(notification.ToString()); }
+                    notification.Close();
 
-                    for (Order consumedOrder : consumedOrders)
-                    {
-                        _bidLimitOrders.remove(consumedOrder);
-                        UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
-                    }
-
-                    if (cart.GetConsumedSize() > 0) { UserCollection.SendNotification(order.GetUser(), notificationMessage); }
-
+                    for (Order consumedOrder : consumedOrders) { _bidLimitOrders.remove(consumedOrder); }
 
                     // if the limit order isn't fully consumed, add it to the ask orders
                     if (!order.IsConsumed())
@@ -271,7 +259,8 @@ public class OrderBook
                             while (!_bidStopOrders.isEmpty())
                             {
                                 StopOrder bidOrder = _bidStopOrders.peek();
-                                TryProcessStopOrder(bidOrder);
+                                String newMessage = TryProcessStopOrder(bidOrder);
+                                if (!newMessage.isEmpty()) { notificationMessages.add(newMessage); }
                                 if (order.IsConsumed()) { _bidStopOrders.remove(bidOrder); }
                                 else { break; }
                             }
@@ -294,15 +283,10 @@ public class OrderBook
                     ClosedTradesNotification notification = consumedOrders_notification.GetY();
                     notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
                     notification.Terminate();
-                    String notificationMessage = notification.ToString();
+                    if (cart.GetConsumedSize() > 0) { notificationMessages.add(notification.ToString()); }
+                    notification.Close();
 
-                    for (Order consumedOrder : consumedOrders)
-                    {
-                        _askLimitOrders.remove(consumedOrder);
-                        UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
-                    }
-
-                    if (cart.GetConsumedSize() > 0) { UserCollection.SendNotification(order.GetUser(), notificationMessage); }
+                    for (Order consumedOrder : consumedOrders) { _askLimitOrders.remove(consumedOrder); }
 
                     // if the limit order isn't fully consumed, add it to the bid orders
                     if (!order.IsConsumed())
@@ -313,7 +297,8 @@ public class OrderBook
                             while (!_askStopOrders.isEmpty())
                             {
                                 StopOrder askOrder = _askStopOrders.peek();
-                                TryProcessStopOrder(askOrder);
+                                String newMessage = TryProcessStopOrder(askOrder);
+                                if (!newMessage.isEmpty()) { notificationMessages.add(newMessage); }
                                 if (askOrder.IsConsumed()) { _askStopOrders.remove(askOrder); }
                                 else { break; }
                             }
@@ -323,7 +308,7 @@ public class OrderBook
             }
         }
 
-        return new OrderResponse(order.GetID());
+        return new Tuple<>(new OrderResponse(order.GetID()), notificationMessages);
     }
 
     /**
@@ -332,9 +317,9 @@ public class OrderBook
      * @param order The stop order to process.
      * @return The result of processing the order.
      */
-    public static OrderResponse ProcessOrder(StopOrder order)
+    public static Tuple<OrderResponse, String> ProcessOrder(StopOrder order)
     {
-        TryProcessStopOrder(order);
+        String notificationMessage = TryProcessStopOrder(order);
 
         if (!order.IsConsumed())
         {
@@ -351,13 +336,14 @@ public class OrderBook
             }
         }
 
-        return new OrderResponse(order.GetID());
+        return new Tuple<>(new OrderResponse(order.GetID()), notificationMessage);
     }
 
-    private static void TryProcessStopOrder(StopOrder order)
+    private static String TryProcessStopOrder(StopOrder order)
     {
         // create a cart object to track the execution of the stop order
         Cart cart = order.CreateCart();
+        String notificationMessage = "";
 
         switch (order.GetMethod())
         {
@@ -381,15 +367,10 @@ public class OrderBook
                         ClosedTradesNotification notification = consumedOrders_notification.GetY();
                         notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
                         notification.Terminate();
-                        String notificationMessage = notification.ToString();
+                        notificationMessage = notification.ToString();
+                        notification.Close();
 
-                        for (Order consumedOrder : consumedOrders)
-                        {
-                            _bidLimitOrders.remove(consumedOrder);
-                            UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
-                        }
-
-                        UserCollection.SendNotification(order.GetUser(), notificationMessage);
+                        for (Order consumedOrder : consumedOrders) { _bidLimitOrders.remove(consumedOrder); }
                     }
                 }
             }
@@ -413,19 +394,16 @@ public class OrderBook
                         ClosedTradesNotification notification = consumedOrders_notification.GetY();
                         notification.Add(order, new Tuple<>(cart.GetConsumedSize(), cart.GetTotalPrice()));
                         notification.Terminate();
-                        String notificationMessage = notification.ToString();
+                        notificationMessage = notification.ToString();
+                        notification.Close();
 
-                        for (Order consumedOrder : consumedOrders)
-                        {
-                            _askLimitOrders.remove(consumedOrder);
-                            UserCollection.SendNotification(consumedOrder.GetUser(), notificationMessage);
-                        }
-
-                        UserCollection.SendNotification(order.GetUser(), notificationMessage);
+                        for (Order consumedOrder : consumedOrders) { _askLimitOrders.remove(consumedOrder); }
                     }
                 }
             }
         }
+
+        return notificationMessage;
     }
 
     public static SimpleResponse TryCancelOrder(CancelOrderRequest request, User user)

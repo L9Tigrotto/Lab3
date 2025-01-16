@@ -5,7 +5,7 @@ import Helpers.Tuple;
 import Messages.ClosedTradesNotification;
 import Users.User;
 
-public abstract class Order
+public class Order
 {
     private final long _id;
     public final Type _type;
@@ -26,6 +26,17 @@ public abstract class Order
         _user = user;
     }
 
+    public Order(long id, Type type, Method method, long size, long price, long timestamp)
+    {
+        _id = id;
+        _type = type;
+        _method = method;
+        _size = size;
+        _price = price;
+        _timestamp = System.currentTimeMillis();
+        _user = null;
+    }
+
     public long GetID() { return _id; }
     public Type GetType() { return _type; }
     public Method GetMethod() { return _method; }
@@ -39,8 +50,8 @@ public abstract class Order
     public boolean WantToSell() { return _method == Method.ASK; }
     public boolean WantToBuy() { return _method == Method.BID; }
 
-    public abstract boolean WantToSellAt(long price);
-    public abstract boolean WantToBuyAt(long price);
+    public boolean WantToSellAt(long price) { return false; }
+    public boolean WantToBuyAt(long price) { return false; }
 
     protected void DecreaseSize(Tuple<Long, Long> size_price) { _size -= size_price.GetX(); }
 

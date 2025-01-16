@@ -243,20 +243,6 @@ public class UserCollection
     public static SimpleResponse TryLogout(User user) { return _instance.TryLogoutInternal(user); }
 
     /**
-     * Sends a notification to a connected user.
-     *
-     * @param user the user to notify
-     * @param notification the notification message
-     */
-    public static void SendNotification(User user, String notification)
-    {
-        Connection connection =  _instance._connected.get(user.GetUsername());
-        if (connection == null) { return; }
-
-        connection.SendNotification(notification);
-    }
-
-    /**
      * Loads the registered users from a file.
      *
      * @param filename the file from which to load user data

@@ -1,6 +1,7 @@
 
 package Networking;
 
+import Helpers.GlobalData;
 import Helpers.Utilities;
 import Messages.*;
 import Orders.Method;
@@ -32,11 +33,18 @@ public class RequestHandler
 
     /**
      * Prints an order response to the console.
+     * This method is used for responses related to order placements such as market, limit, or stop orders.
+     * It also adds the order ID to the global list if it's a valid response.
      *
      * @param response The OrderResponse object to print.
      */
     private static void PrintResponse(OrderResponse response)
     {
+        if (response.GetOrderID() != -1)
+        {
+            synchronized (GlobalData.ORDER_IDS) { GlobalData.ORDER_IDS.add(response.GetOrderID()); }
+        }
+
         System.out.printf("[INFO] Response received.\n\t-> OrderID: %d\n", response.GetOrderID());
     }
 
@@ -379,6 +387,12 @@ public class RequestHandler
         CancelOrderRequest request = new CancelOrderRequest(orderID);
         SimpleResponse response = (SimpleResponse) SendAndWaitResponse(connection, request);
         if (response == null) { return false; }
+
+        // remove the order ID from the global order list if the cancellation is successful
+        if (response.GetResponse() == CancelOrderRequest.OK.GetResponse())
+        {
+            synchronized (GlobalData.ORDER_IDS) { GlobalData.ORDER_IDS.remove(orderID); }
+        }
 
         PrintResponse(response);
         return true;
