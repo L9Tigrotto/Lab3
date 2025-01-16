@@ -214,38 +214,41 @@ public class HistoryRecordCollection
         File orderHistoryFile = new File(filename);
         if (!orderHistoryFile.exists()) { return; }
 
-        try (FileWriter fileWriter = new FileWriter(orderHistoryFile);
-             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-             JsonWriter jsonWriter = new JsonWriter(bufferedWriter))
+        synchronized (_collection)
         {
-            jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
-            jsonWriter.beginObject();
-
-            jsonWriter.name("trades");
-            jsonWriter.beginArray();
-
-            for (Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> firstLayer : _collection)
+            try (FileWriter fileWriter = new FileWriter(orderHistoryFile);
+                 BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+                 JsonWriter jsonWriter = new JsonWriter(bufferedWriter))
             {
-                for (Tuple<Long, List<HistoryRecord>> secondLayer : firstLayer.GetY())
+                jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
+                jsonWriter.beginObject();
+
+                jsonWriter.name("trades");
+                jsonWriter.beginArray();
+
+                for (Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> firstLayer : _collection)
                 {
-                    for (HistoryRecord record : secondLayer.GetY())
+                    for (Tuple<Long, List<HistoryRecord>> secondLayer : firstLayer.GetY())
                     {
-                        jsonWriter.beginObject();
+                        for (HistoryRecord record : secondLayer.GetY())
+                        {
+                            jsonWriter.beginObject();
 
-                        jsonWriter.name("orderID").value(record.GetID());
-                        jsonWriter.name("type").value(record.GetMethod().ToString());
-                        jsonWriter.name("orderType").value(record.GetType().ToString());
-                        jsonWriter.name("size").value(record.GetSize());
-                        jsonWriter.name("price").value(record.GetPrice());
-                        jsonWriter.name("timestamp").value(record.GetTimestamp() / 1000);
+                            jsonWriter.name("orderID").value(record.GetID());
+                            jsonWriter.name("type").value(record.GetMethod().ToString());
+                            jsonWriter.name("orderType").value(record.GetType().ToString());
+                            jsonWriter.name("size").value(record.GetSize());
+                            jsonWriter.name("price").value(record.GetPrice());
+                            jsonWriter.name("timestamp").value(record.GetTimestamp() / 1000);
 
-                        jsonWriter.endObject();
+                            jsonWriter.endObject();
+                        }
                     }
                 }
-            }
 
-            jsonWriter.endArray();
-            jsonWriter.endObject();
+                jsonWriter.endArray();
+                jsonWriter.endObject();
+            }
         }
     }
 

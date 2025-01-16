@@ -78,6 +78,8 @@ public class Listener
     {
         System.out.printf("[INFO] Listening on port %d\n", GlobalData.SETTINGS.TCP_PORT);
 
+        long lastSave = System.currentTimeMillis();
+
         BlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<Runnable>(GlobalData.SETTINGS.MaxConcurrentClients);
         try (ExecutorService threadPool = new ThreadPoolExecutor(0, GlobalData.SETTINGS.MaxConcurrentClients,
                 1, TimeUnit.SECONDS, taskQueue);
@@ -89,6 +91,9 @@ public class Listener
             // listen for incoming connections until the stop request is triggered
             while (!_isStopRequested.compareAndSet(true, false))
             {
+                long elapsed = System.currentTimeMillis() - lastSave;
+                if (elapsed > GlobalData.SETTINGS.SaveIntervalMS) { GlobalData.Save(); }
+
                 try
                 {
                     Socket socket = serverSocket.accept();

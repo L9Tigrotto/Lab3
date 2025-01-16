@@ -28,6 +28,8 @@ public class ServerSettings extends Settings
 
     public String OrderHistoryFilename;
 
+    public int SaveIntervalMS;
+
     /**
      * Constructor that takes the configuration filename as input.
      * @param filename The name of the configuration file.
@@ -54,6 +56,7 @@ public class ServerSettings extends Settings
         NextOrderID = Integer.parseInt(properties.getProperty("NextOrderID"));
         UsersFilename = properties.getProperty("UsersFilename");
         OrderHistoryFilename = properties.getProperty("OrderHistoryFilename");
+        SaveIntervalMS = Integer.parseInt(properties.getProperty("SaveIntervalMS"));
     }
 
     @Override
