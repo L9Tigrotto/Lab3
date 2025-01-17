@@ -60,8 +60,5 @@ public class ServerSettings extends Settings
     }
 
     @Override
-    protected void Update(Properties properties)
-    {
-        properties.setProperty("NextOrderID", String.valueOf(NextOrderID));
-    }
+    protected void Update(Properties properties) { properties.setProperty("NextOrderID", String.valueOf(NextOrderID)); }
 }

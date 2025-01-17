@@ -11,23 +11,24 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
 
 // first layer list ordered by year and month
-// second layer list ordered by day
+// second layer list ordered by day of month
 // [
-//      2021/01 : [
-//          { price history 1 },
-//          { price history 2 },
+//      2024/09 : [
+//          2024/09/01 : [
+//              { price record 1 },
+//              { price record 2 },
+//              ...
+//          ],
+//          2024/09/02 : [
+//              { price record 1 },
+//              { price record 2 },
+//              ...
+//          ],
 //          ...
-//      ],
-//      ...
-//      2021/03 : [
-//          { price history 1 },
-//          { price history 2 },
-//      ...
 //      ],
 //      ...
 // ]
