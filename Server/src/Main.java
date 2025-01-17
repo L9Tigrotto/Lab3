@@ -16,7 +16,10 @@ public class Main
         // start the listener thread to accept connections from clients
         GlobalData.TCP_LISTENER.Start();
 
-        System.out.println("[INFO] Server started, enter 'stop' to stop the server");
+        System.out.println("[INFO] Server started");
+
+        System.out.println("a) 'stop' to stop the server");
+        System.out.println("b) 'help' print options");
 
         // create a scanner to read user input for server termination
         try (Scanner scanner = new Scanner(System.in))
@@ -26,10 +29,8 @@ public class Main
             {
                 String input = scanner.nextLine().trim();
                 if (input.equalsIgnoreCase("stop")) { break; }
-                if (input.equalsIgnoreCase("status"))
-                {
-                    System.out.println(OrderBook.PrintStatus());
-                }
+                else if (input.equalsIgnoreCase("help")) { PrintOptions(); }
+                if (input.equalsIgnoreCase("status")) { System.out.println(OrderBook.PrintStatus()); }
             }
         }
 
@@ -40,5 +41,15 @@ public class Main
         GlobalData.Save();
 
         System.out.println("[INFO] Server stopped successfully");
+    }
+
+    /**
+     * Prints the available options.
+     */
+    private static void PrintOptions()
+    {
+        System.out.println("a) 'stop' to stop the server");
+        System.out.println("b) 'help' print options");
+        System.out.println("c) 'status' to print the order book status");
     }
 }
