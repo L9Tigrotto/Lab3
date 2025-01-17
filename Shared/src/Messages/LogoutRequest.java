@@ -11,8 +11,8 @@ import java.io.IOException;
 public class LogoutRequest extends Request
 {
     public static final SimpleResponse OK = new SimpleResponse(100, "OK");
-    public static final SimpleResponse USER_NOT_LOGGED = new SimpleResponse(101, "Username/connection mismatch or non existent user or user not logged in or other error cases");
-    public static final SimpleResponse OTHER_ERROR_CASES = new SimpleResponse(101, "Username/connection mismatch or non existent user or user not logged in or other error cases");
+    public static final SimpleResponse USER_NOT_LOGGED = new SimpleResponse(101, "User not logged in");
+    public static final SimpleResponse OTHER_ERROR_CASES = new SimpleResponse(101, "Other error cases\n");
 
     public LogoutRequest() { super(OperationType.LOGOUT); }
 

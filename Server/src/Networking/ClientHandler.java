@@ -154,14 +154,15 @@ public class ClientHandler implements Runnable
     {
         String username = register.GetUsername();
         String password = register.GetPassword();
-        SimpleResponse response;
 
         // check if the username is valid and available
-        if (!User.IsUsernameValid(username) || UserCollection.IsRegistered(username)) { response = RegisterRequest.USERNAME_NOT_AVAILABLE; }
-        else if (!User.IsPasswordValid(password)) { response = RegisterRequest.INVALID_PASSWORD; }
-        else { response = UserCollection.TryRegister(username, password); }
-
-        SendResponse(response);
+        if (!User.IsUsernameValid(username) || UserCollection.IsRegistered(username)) { SendResponse(RegisterRequest.USERNAME_NOT_AVAILABLE); }
+        else if (!User.IsPasswordValid(password)) { SendResponse(RegisterRequest.INVALID_PASSWORD); }
+        else
+        {
+            SimpleResponse response = UserCollection.TryRegister(username, password);
+            SendResponse(response);
+        }
     }
 
     /**
@@ -178,12 +179,11 @@ public class ClientHandler implements Runnable
         String username = request.GetUsername();
         String oldPassword = request.GetOldPassword();
         String newPassword = request.GetNewPassword();
-        SimpleResponse response;
 
         // check if the user is logged in and if the new password is valid.
-        if (_user != null) { response = UpdateCredentialsRequest.USER_LOGGED_IN; }
-        else if (!User.IsPasswordValid(newPassword)) { response = UpdateCredentialsRequest.INVALID_NEWPASSWORD; }
-        else if (!UserCollection.IsRegistered(username)) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
+        if (_user != null) { SendResponse(UpdateCredentialsRequest.USER_LOGGED_IN); }
+        else if (!User.IsPasswordValid(newPassword)) { SendResponse(UpdateCredentialsRequest.INVALID_NEWPASSWORD); }
+        else if (!UserCollection.IsRegistered(username)) { SendResponse(UpdateCredentialsRequest.NON_EXISTENT_USER); }
 
         // attempt to update the user's password
         else
@@ -191,11 +191,10 @@ public class ClientHandler implements Runnable
             try
             {
                 User user = UserCollection.FromName(username);
-                response = user.TryUpdatePassword(oldPassword, newPassword);
-            } catch (UserNotRegisteredException e) { response = UpdateCredentialsRequest.NON_EXISTENT_USER; }
+                SimpleResponse response = user.TryUpdatePassword(oldPassword, newPassword);
+                SendResponse(response);
+            } catch (UserNotRegisteredException e) { SendResponse(UpdateCredentialsRequest.NON_EXISTENT_USER); }
         }
-
-        SendResponse(response);
     }
 
     /**
@@ -211,24 +210,21 @@ public class ClientHandler implements Runnable
     {
         String username = request.GetUsername();
         String password = request.GetPassword();
-        SimpleResponse response;
 
         // check if the user is already logged in
-        if (_user != null) { response = LoginRequest.USER_ALREADY_LOGGED_IN; }
-        else if (!UserCollection.IsRegistered(username)) { response = LoginRequest.NON_EXISTENT_USER; }
+        if (_user != null) { SendResponse(LoginRequest.USER_ALREADY_LOGGED_IN); }
+        else if (!UserCollection.IsRegistered(username)) { SendResponse(LoginRequest.NON_EXISTENT_USER); }
         else
         {
             User user = null;
             try { user = UserCollection.FromName(username); }
             catch (UserNotRegisteredException e) { SendResponse(LoginRequest.OTHER_ERROR_CASES); return; } // should not happen
 
-            response = UserCollection.TryLogin(user, password, _connection);
+            SimpleResponse response = UserCollection.TryLogin(user, password, _connection);
 
             // if login is successful, associate the user with the handler.
             if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = user; }
         }
-
-        SendResponse(response);
     }
 
     /**
@@ -244,17 +240,15 @@ public class ClientHandler implements Runnable
         SimpleResponse response;
 
         // check if the user is currently logged in
-        if (_user == null) { response = LogoutRequest.USER_NOT_LOGGED; }
+        if (_user == null) { SendResponse(LogoutRequest.USER_NOT_LOGGED); }
 
         else
         {
             response = UserCollection.TryLogout(_user);
-
+            SendResponse(response);
             // clear the user reference if logout was successful
             if (response.GetResponse() == LogoutRequest.OK.GetResponse()) { _user = null; }
         }
-
-        SendResponse(response);
     }
 
     /**
@@ -333,14 +327,13 @@ public class ClientHandler implements Runnable
      */
     private void HandleCancelOrderRequest(CancelOrderRequest request) throws IOException
     {
-        SimpleResponse response;
-
         // check if the user is currently logged in
-        if (_user == null) { response = CancelOrderRequest.OTHER_ERROR_CASES; }
-
-        else { response = OrderBook.TryCancelOrder(request, _user); }
-
-        SendResponse(response);
+        if (_user == null) { SendResponse(CancelOrderRequest.OTHER_ERROR_CASES); }
+        else
+        {
+            SimpleResponse response = OrderBook.TryCancelOrder(request, _user);
+            SendResponse(response);
+        }
     }
 
     /**
@@ -349,13 +342,12 @@ public class ClientHandler implements Runnable
      */
     private void HandleGetPriceHistoryRequest(GetPriceHistoryRequest request) throws IOException
     {
-        SimpleResponse response;
-
         // check if the user is currently logged in
-        if (_user == null) { response = GetPriceHistoryRequest.USER_NOT_LOGGED; }
-
-        else { response = HistoryRecordCollection.GetPrices(request); }
-
-        SendResponse(response);
+        if (_user == null) { SendResponse(GetPriceHistoryRequest.USER_NOT_LOGGED); }
+        else
+        {
+            SimpleResponse response = HistoryRecordCollection.GetPrices(request);
+            SendResponse(response);
+        }
     }
 }
