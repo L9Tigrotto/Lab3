@@ -20,11 +20,14 @@ public class GlobalData
     // the client settings object, loaded from the configuration file
     public static final ClientSettings SETTINGS;
 
+    // the multicast socket used for receiving notifications
     public static final MulticastSocket MULTICAST_SOCKET;
 
-    public static final Thread NOTIFICATION_THREAD;
-
+    // set of order IDs, used to track which orders have been inserted
     public static final HashSet<Long> ORDER_IDS;
+
+    // thread responsible for receiving and processing notifications
+    public static final Thread NOTIFICATION_THREAD;
 
     // static initializer block to load client settings at startup
     static

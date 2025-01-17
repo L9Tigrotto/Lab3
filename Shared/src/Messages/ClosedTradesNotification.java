@@ -16,11 +16,18 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class is responsible for creating and serializing a closed trades notification,
+ * as well as deserializing it back into a list of orders. The notification is in JSON format.
+ */
 public class ClosedTradesNotification
-{ ;
+{
     private final StringWriter _stringWriter;
     private final JsonWriter _jsonWriter;
 
+    /**
+     * Constructor that initializes the JSON writer and begins the structure of the notification.
+     */
     public ClosedTradesNotification()
     {
         _stringWriter = new StringWriter();
@@ -39,6 +46,12 @@ public class ClosedTradesNotification
         catch (IOException e) { throw new RuntimeException(e); }
     }
 
+    /**
+     * Adds a new order to the notification with its associated size and price.
+     *
+     * @param order The order to add to the notification.
+     * @param size_price A tuple containing the size and price of the order.
+     */
     public void Add(Order order, Tuple<Long, Long> size_price)
     {
         try
@@ -58,6 +71,9 @@ public class ClosedTradesNotification
 
     }
 
+    /**
+     * Terminates the notification JSON structure by closing the 'trades' array and the root object.
+     */
     public void Terminate()
     {
         try
@@ -68,8 +84,16 @@ public class ClosedTradesNotification
         catch (IOException e) { throw new RuntimeException(e); }
     }
 
+    /**
+     * Converts the current notification object to its string representation (JSON format).
+     *
+     * @return The JSON string representation of the closed trades notification.
+     */
     public String ToString() { return _stringWriter.toString(); }
 
+    /**
+     * Closes the writers, releasing any resources.
+     */
     public void Close()
     {
         try
@@ -80,6 +104,13 @@ public class ClosedTradesNotification
         catch (IOException e) { }
     }
 
+    /**
+     * Deserializes a JSON string into a list of Order objects.
+     * This method assumes the string is in the format of a closed trades notification.
+     *
+     * @param text The JSON string to deserialize.
+     * @return A list of orders extracted from the JSON.
+     */
     public static List<Order> DeserializeContent(String text)
     {
         List<Order> orders = new ArrayList<>();
@@ -88,6 +119,7 @@ public class ClosedTradesNotification
         {
             jsonReader.beginObject();
 
+            // check the notification type, must be 'closedTrades'
             String temp = Utilities.ReadString(jsonReader, "notification");
             if (!temp.equalsIgnoreCase("closedTrades"))
             {
@@ -95,6 +127,7 @@ public class ClosedTradesNotification
                 return orders;
             }
 
+            // check that the 'trades' array exists
             temp = jsonReader.nextName();
             if (!temp.equalsIgnoreCase("trades"))
             {

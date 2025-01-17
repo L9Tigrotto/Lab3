@@ -9,25 +9,22 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 
 /**
- * Represents a simple response message sent from the server to the client.
- *
- * This class encapsulates a basic response structure, containing:
- *  - A numeric response code indicating the success or failure of the operation.
- *  - An error message providing more details about the response.
+ * This class represents a simple response that contains a response code and an error message.
+ * It extends the `Response` class and provides methods to serialize and deserialize the response data to and from JSON.
  */
 public class SimpleResponse extends Response
 {
-    // the numeric response code.
+    // the numeric response code (e.g., 100 for success, 101 for error, etc.)
     private final int _response;
 
-    // the optional error message.
+    // the error message providing details about the response
     private final String _errorMessage;
 
     /**
-     * Constructs a new SimpleResponse object with the given response code and error message.
+     * Constructor to initialize a SimpleResponse with a response code and an error message.
      *
      * @param response The numeric response code.
-     * @param errorMessage The error message (can be null).
+     * @param errorMessage The error message describing the response.
      */
     public SimpleResponse(int response, String errorMessage)
     {
@@ -36,14 +33,26 @@ public class SimpleResponse extends Response
         _errorMessage = errorMessage;
     }
 
+    /**
+     * Getter for the response code.
+     *
+     * @return The numeric response code (e.g., 100 for OK, 101 for error, etc.).
+     */
     public int GetResponse() { return _response; }
+
+    /**
+     * Getter for the error message.
+     *
+     * @return The error message associated with the response.
+     */
     public String GetErrorMessage() { return _errorMessage; }
 
     /**
-     * Serializes the response content to the given JsonWriter.
+     * Serializes the content of this SimpleResponse into JSON format.
+     * The response code and the error message are serialized as name-value pairs.
      *
-     * @param jsonWriter The JsonWriter to serialize the content to.
-     * @throws IOException If an I/O error occurs during serialization.
+     * @param jsonWriter The JSON writer used for serialization.
+     * @throws IOException If an I/O error occurs during the serialization.
      */
     protected void SerializeContent(JsonWriter jsonWriter) throws IOException
     {
@@ -52,13 +61,11 @@ public class SimpleResponse extends Response
     }
 
     /**
-     * Deserializes a SimpleResponse object from the given JsonReader.
+     * Deserializes a SimpleResponse from JSON format.
+     * The method expects the response code and error message in the JSON input.
      *
-     * **Note:** This method assumes that the `nextName()` call has already been
-     * performed by the parent `Response` class to determine the response type.
-     *
-     * @param jsonReader The JsonReader to deserialize the content from.
-     * @return The deserialized SimpleResponse object.
+     * @param jsonReader The JSON reader used for deserialization.
+     * @return A new SimpleResponse instance with the deserialized data.
      * @throws IOException If an I/O error occurs during deserialization.
      */
     public static SimpleResponse FromJson(JsonReader jsonReader) throws IOException
