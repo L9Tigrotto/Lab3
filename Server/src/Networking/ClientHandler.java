@@ -221,6 +221,7 @@ public class ClientHandler implements Runnable
             catch (UserNotRegisteredException e) { SendResponse(LoginRequest.OTHER_ERROR_CASES); return; } // should not happen
 
             SimpleResponse response = UserCollection.TryLogin(user, password, _connection);
+            SendResponse(response);
 
             // if login is successful, associate the user with the handler.
             if (response.GetResponse() == LoginRequest.OK.GetResponse()) { _user = user; }

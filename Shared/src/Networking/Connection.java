@@ -99,7 +99,11 @@ public class Connection
      * @param request The Request object to be sent.
      * @throws IOException If an error occurs while writing data to the stream.
      */
-    public void Send(Request request) throws IOException { _dataOutputStream.writeUTF(request.ToJson()); }
+    public void Send(Request request) throws IOException
+    {
+        _dataOutputStream.writeUTF(request.ToJson());
+        _dataOutputStream.flush();
+    }
 
     /**
      * Sends a Response object over the TCP connection.
@@ -108,7 +112,11 @@ public class Connection
      * @param response The Response object to be sent.
      * @throws IOException If an error occurs while writing data to the stream.
      */
-    public void Send(Response response) throws IOException { _dataOutputStream.writeUTF(response.ToJson()); }
+    public void Send(Response response) throws IOException
+    {
+        _dataOutputStream.writeUTF(response.ToJson());
+        _dataOutputStream.flush();
+    }
 
     /**
      * Sends a notification to the client over UDP.
