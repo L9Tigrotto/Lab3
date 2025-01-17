@@ -83,7 +83,11 @@ public class UserCollection
     {
         // attempt to insert the new user into the collection
         User user = new User(username, password);
-        if (_registered.putIfAbsent(username, user) != null) { return RegisterRequest.USERNAME_NOT_AVAILABLE; }
+
+        synchronized(_registered)
+        {
+            if (_registered.putIfAbsent(username, user) != null) { return RegisterRequest.USERNAME_NOT_AVAILABLE; }
+        }
 
         // if the user is successfully inserted inserted, send an OK response
         return RegisterRequest.OK;
@@ -174,14 +178,17 @@ public class UserCollection
             jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
             jsonWriter.beginArray();
 
-            Set<Map.Entry<String, User>> entrySet = _registered.entrySet();
+            synchronized (_registered)
+            {
+                Set<Map.Entry<String, User>> entrySet = _registered.entrySet();
 
-            //iterate through the registered users and write each user's data to the file
-            for (Map.Entry<String, User> entry : entrySet) {
-                jsonWriter.beginObject();
-                jsonWriter.name("name").value(entry.getValue().GetUsername());
-                jsonWriter.name("password").value(entry.getValue().GetPassword());
-                jsonWriter.endObject();
+                //iterate through the registered users and write each user's data to the file
+                for (Map.Entry<String, User> entry : entrySet) {
+                    jsonWriter.beginObject();
+                    jsonWriter.name("name").value(entry.getValue().GetUsername());
+                    jsonWriter.name("password").value(entry.getValue().GetPassword());
+                    jsonWriter.endObject();
+                }
             }
 
             jsonWriter.endArray();
