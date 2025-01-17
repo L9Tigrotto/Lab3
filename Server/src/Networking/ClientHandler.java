@@ -247,6 +247,7 @@ public class ClientHandler implements Runnable
         {
             response = UserCollection.TryLogout(_user);
             SendResponse(response);
+
             // clear the user reference if logout was successful
             if (response.GetResponse() == LogoutRequest.OK.GetResponse()) { _user = null; }
         }
@@ -289,7 +290,6 @@ public class ClientHandler implements Runnable
         {
             LimitOrder order = GlobalData.CreateLimitOrder(request, _user);
             response_message = OrderBook.ProcessOrder(order);
-
             SendResponse(response_message.GetX());
 
             // send any notifications related to the order
