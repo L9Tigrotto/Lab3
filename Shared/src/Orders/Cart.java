@@ -11,7 +11,7 @@ public class Cart
 {
     private final List<Order> _orders;
     private final Order _order;
-    private long _targetSize;
+    private final long _targetSize;
     private long _remainingSize;
     private long _totalPrice;
 

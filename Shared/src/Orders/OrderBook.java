@@ -6,14 +6,19 @@ import Messages.ClosedTradesNotification;
 import Messages.OrderResponse;
 import Messages.SimpleResponse;
 import Users.User;
-import Users.UserCollection;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 
+/**
+ * The OrderBook class represents the entire order book, which manages and processes different types of orders
+ * such as limit orders, market orders, and stop orders for both ask and bid sides.
+ */
 public class OrderBook
 {
+    // priority queues for managing ask and bid limit orders.
+
     @SuppressWarnings("ComparatorCombinators")
     private static final PriorityQueue<LimitOrder> _askLimitOrders
             = new PriorityQueue<>((orderA, orderB) -> {
@@ -49,9 +54,10 @@ public class OrderBook
             });
 
     /**
-     * Calculates the spread between the best bid and the best ask.
+     * Gets the spread between the best bid and the best ask prices.
+     * The spread is calculated as (best bid price - best ask price).
      *
-     * @return The spread (best bid - best ask).
+     * @return The spread (difference between best bid and best ask).
      */
     public static long GetSpread()
     {
@@ -71,6 +77,12 @@ public class OrderBook
         }
     }
 
+    /**
+     * Gets the best price for a given method (ASK or BID).
+     *
+     * @param method The order method (ASK or BID).
+     * @return The best price available for the given method.
+     */
     public static long GetBestPrice(Method method)
     {
         long price = 0;
@@ -141,10 +153,10 @@ public class OrderBook
     }
 
     /**
-     * Processes a market order.
+     * Processes a market order and attempts to match it with available limit orders in the order book.
      *
      * @param order The market order to process.
-     * @return The result of processing the order.
+     * @return A tuple containing the order response and any notification messages.
      */
     public static Tuple<OrderResponse, String> ProcessOrder(MarketOrder order)
     {
@@ -216,10 +228,10 @@ public class OrderBook
     }
 
     /**
-     * Processes a limit order.
+     * Processes a limit order and attempts to match it with available limit and stop orders.
      *
      * @param order The limit order to process.
-     * @return The result of processing the order.
+     * @return A tuple containing the order response and any notification messages.
      */
     public static Tuple<OrderResponse, List<String>> ProcessOrder(LimitOrder order)
     {
@@ -312,10 +324,11 @@ public class OrderBook
     }
 
     /**
-     * Processes a stop order.
+     * Processes a stop order and attempts to match it with available limit orders.
+     * If a stop order is triggered, it behaves like a market order.
      *
      * @param order The stop order to process.
-     * @return The result of processing the order.
+     * @return A tuple containing the order response and any notification messages.
      */
     public static Tuple<OrderResponse, String> ProcessOrder(StopOrder order)
     {
@@ -339,6 +352,13 @@ public class OrderBook
         return new Tuple<>(new OrderResponse(order.GetID()), notificationMessage);
     }
 
+    /**
+     * Attempts to trigger and process a stop order by matching it with the available orders.
+     * If a stop order's conditions are met, it gets executed as a market order.
+     *
+     * @param order The stop order to process.
+     * @return Any notification message generated during the execution of the stop order.
+     */
     private static String TryProcessStopOrder(StopOrder order)
     {
         // create a cart object to track the execution of the stop order

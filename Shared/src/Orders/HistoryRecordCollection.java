@@ -32,16 +32,27 @@ import java.util.TreeSet;
 //      ],
 //      ...
 // ]
+/**
+ * A singleton class that holds a collection of history records for trades,
+ * organized by year, month, and day. This class supports adding records,
+ * retrieving price history, and saving/loading the records to/from a file.
+ */
 public class HistoryRecordCollection
 {
+    // singleton instance of the HistoryRecordCollection
     private static final HistoryRecordCollection _instance = new HistoryRecordCollection();
 
+    // collection storing records ordered by year, month, and day
     private final TreeSet<
             Tuple<Long, TreeSet< // years and months
                     Tuple<Long, List<HistoryRecord>> // days
                     >>
             > _collection;
 
+    /**
+     * Private constructor initializing the collection.
+     * This constructor ensures that the records are sorted by year, month, and day.
+     */
     private HistoryRecordCollection()
     {
         _collection = new TreeSet<>(
@@ -58,6 +69,11 @@ public class HistoryRecordCollection
                 });
     }
 
+    /**
+     * Creates a second layer of the collection, sorted by day of the month.
+     *
+     * @return A TreeSet representing the second layer (sorted by day).
+     */
     private static TreeSet<Tuple<Long, List<HistoryRecord>>> CreateSecondLayer()
     {
         return new TreeSet<>(
@@ -70,6 +86,12 @@ public class HistoryRecordCollection
                 });
     }
 
+    /**
+     * Retrieves the first layer (year and month) tuple for a given timestamp.
+     *
+     * @param timestamp The timestamp used to find the year and month.
+     * @return A Tuple representing the first layer (year and month).
+     */
     private Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> GetFirstLayerTuple(long timestamp)
     {
         Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> dummy = new Tuple<>(timestamp, null);
@@ -86,6 +108,13 @@ public class HistoryRecordCollection
         return firstLayerTuple;
     }
 
+    /**
+     * Retrieves the second layer (day of month) tuple for a given first layer and timestamp.
+     *
+     * @param firstLayerTuple The first layer (year and month) tuple.
+     * @param timestamp The timestamp used to find the day of the month.
+     * @return A Tuple representing the second layer (day of month).
+     */
     private Tuple<Long, List<HistoryRecord>> GetSecondLayerTuple(Tuple<Long, TreeSet<Tuple<Long, List<HistoryRecord>>>> firstLayerTuple, long timestamp)
     {
         Tuple<Long, List<HistoryRecord>> dummy = new Tuple<>(timestamp, null);
@@ -103,6 +132,11 @@ public class HistoryRecordCollection
         return secondLayerTuple;
     }
 
+    /**
+     * Adds a history record to the internal collection, organizing it by year, month, and day.
+     *
+     * @param record The HistoryRecord to add.
+     */
     private void AddInternal(HistoryRecord record)
     {
         synchronized (_collection)
@@ -113,6 +147,12 @@ public class HistoryRecordCollection
         }
     }
 
+    /**
+     * Retrieves the price history for a given request, returning a response.
+     *
+     * @param request The GetPriceHistoryRequest containing the timestamp.
+     * @return A SimpleResponse containing the formatted price history.
+     */
     private SimpleResponse GetPricesInternal(GetPriceHistoryRequest request)
     {
         String result;
@@ -166,6 +206,13 @@ public class HistoryRecordCollection
         return new SimpleResponse(100, result);
     }
 
+    /**
+     * Loads history records from a file, parsing the data and organizing it by year, month, and day.
+     *
+     * @param filename The filename to load the history from.
+     * @return The last used order ID from the loaded data.
+     * @throws IOException If an error occurs while reading the file.
+     */
     private long LoadInternal(String filename) throws IOException
     {
         File orderHistoryFile = new File(filename);
@@ -210,6 +257,12 @@ public class HistoryRecordCollection
         return lastUsedID;
     }
 
+    /**
+     * Saves the history records to a file in JSON format.
+     *
+     * @param filename The filename to save the history to.
+     * @throws IOException If an error occurs while writing to the file.
+     */
     private void SaveInternal(String filename) throws IOException
     {
         File orderHistoryFile = new File(filename);
@@ -252,6 +305,8 @@ public class HistoryRecordCollection
             }
         }
     }
+
+    // public static methods to access functionality
 
     public static void Add(HistoryRecord record) { _instance.AddInternal(record); }
     public static SimpleResponse GetPrices(GetPriceHistoryRequest request) { return _instance.GetPricesInternal(request); }
