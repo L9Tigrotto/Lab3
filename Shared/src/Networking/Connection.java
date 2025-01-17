@@ -149,6 +149,6 @@ public class Connection
         _dataInputStream.close();
         _dataOutputStream.close();
         _socketTCP.close();
-        _socketUDP.close();
+        if (_socketUDP != null) { _socketUDP.close(); }
     }
 }
