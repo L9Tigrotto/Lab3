@@ -266,7 +266,7 @@ public class HistoryRecordCollection
     private void SaveInternal(String filename) throws IOException
     {
         File orderHistoryFile = new File(filename);
-        if (!orderHistoryFile.exists()) { return; }
+        if (_collection.isEmpty()) { return; }
 
         synchronized (_collection)
         {

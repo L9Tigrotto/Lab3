@@ -89,7 +89,7 @@ public class UserCollection
             if (_registered.putIfAbsent(username, user) != null) { return RegisterRequest.USERNAME_NOT_AVAILABLE; }
         }
 
-        // if the user is successfully inserted inserted, send an OK response
+        // if the user is successfully inserted, send an OK response
         return RegisterRequest.OK;
     }
 
@@ -168,7 +168,7 @@ public class UserCollection
     private void SaveInternal(String filename) throws IOException
     {
         File userFile = new File(filename);
-        if (!userFile.exists()) { return; }
+        if (_registered.isEmpty()) { return; }
 
         // open the file and write the user data in JSON format
         try (FileWriter fileWriter = new FileWriter(userFile);
