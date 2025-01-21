@@ -80,7 +80,7 @@ public class Listener
 
         long lastSave = System.currentTimeMillis();
 
-        BlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<Runnable>(GlobalData.SETTINGS.MaxConcurrentClients);
+        BlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<>(GlobalData.SETTINGS.MaxConcurrentClients);
         try (ExecutorService threadPool = new ThreadPoolExecutor(0, GlobalData.SETTINGS.MaxConcurrentClients,
                 1, TimeUnit.SECONDS, taskQueue);
              ServerSocket serverSocket = new ServerSocket(GlobalData.SETTINGS.TCP_PORT))
@@ -100,7 +100,7 @@ public class Listener
 
                     // create a ClientHandler to manage the new client
                     ClientHandler client = new ClientHandler(socket);
-                    threadPool.submit(client);
+                    threadPool.execute(client);
                 }
                 catch (SocketTimeoutException e) { continue; }
             }
